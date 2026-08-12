@@ -1,6 +1,6 @@
 {
     "name": "Reports",
-    "alias": "reports",
+    "alias": "dotreports",
     "description": "Help desk reporting - volume, triage effectiveness, resolution times",
     "version": "0.1.0",
     "detailsUrl": "",

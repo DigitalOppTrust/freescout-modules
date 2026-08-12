@@ -3,7 +3,7 @@
 @section('title', 'Reports')
 
 @section('stylesheets')
-    <link rel="stylesheet" href="{{ asset('modules/reports/css/module.css') }}">
+    <link rel="stylesheet" href="{{ asset('modules/dotreports/css/module.css') }}">
 @endsection
 
 @section('content')

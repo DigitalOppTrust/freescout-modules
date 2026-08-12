@@ -95,6 +95,23 @@ It exits non-zero on failure, so it can gate a deploy. The assertions that
 matter most are the ones proving a conversation closed without `closed_at` is
 still timed, and that a note never counts as a first response.
 
+## Why the alias is `dotreports`
+
+The module is named Reports but its alias in `module.json` is **`dotreports`**,
+deliberately.
+
+FreeScout's Modules page matches installed modules against its own directory
+**by alias**, and the official paid Reports module owns `reports`. Sharing that
+alias makes FreeScout report "updates available — Reports (1.0.59)" and offer to
+install a completely different, paid module over this one.
+
+The alias also determines the public asset path, so stylesheets are served from
+`public/modules/dotreports`. The Blade namespace stays `reports::` — it is
+registered in the service provider and is independent of the alias.
+
+If you rename the alias, you must update `asset('modules/<alias>/...')` in the
+views to match, and re-run `freescout:module-install` to recreate the symlink.
+
 ## Implementation notes
 
 FreeScout runs **Laravel 5.5**, which has no `joinSub()` / `leftJoinSub()`.

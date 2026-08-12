@@ -8,6 +8,13 @@ class ReportsServiceProvider extends ServiceProvider
 {
     protected $defer = false;
     public $moduleName = 'Reports';
+
+    // The Blade namespace, NOT the module alias. The alias in module.json is
+    // "dotreports" deliberately: FreeScout matches installed modules against
+    // its own directory by alias, and the official paid Reports module owns
+    // "reports". Sharing it makes the Modules page offer that module as an
+    // "update" to this one. Views stay under reports:: - the namespace is
+    // registered here and is independent of the alias.
     public $moduleNameLower = 'reports';
 
     public function boot()
