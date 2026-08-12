@@ -37,8 +37,9 @@
 
 /* ── Agent list ─────────────────────────────────────────── */
 .triage-agents td { vertical-align: middle; font-size: 13px; }
-.triage-agent-row { cursor: pointer; }
 .triage-agent-row:hover { background: #f0f6fb !important; }
+.triage-agent-row a { text-decoration: none; }
+.triage-agent-row a:hover { text-decoration: underline; }
 
 .triage-status.off      { background: #f4f4f4; color: #7f8c8d; }
 .triage-status.off .dot { background: #b0b7bd; }

@@ -73,8 +73,8 @@
     <div class="descr-block">
         <p>
             The <strong>Handles</strong> description is what the model reasons over when
-            routing. Specific descriptions route far better than vague ones — click an
-            agent to edit theirs.
+            routing. Specific descriptions route far better than vague ones — use
+            <strong>Set up</strong> or <strong>Edit</strong> to change them.
         </p>
     </div>
 
@@ -87,15 +87,17 @@
                 <th>Escalates to</th>
                 <th class="text-center">SLA</th>
                 <th class="text-center">Status</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
         @foreach ($users as $user)
             @php $p = $profiles->get($user->id); @endphp
-            <tr class="triage-agent-row"
-                onclick="window.location='{{ route('triage.agent', ['id' => $user->id, 'mailbox_id' => $mailboxId]) }}'">
+            <tr class="triage-agent-row">
                 <td>
-                    <strong>{{ $user->getFullName() }}</strong><br>
+                    <a href="{{ route('triage.agent', ['id' => $user->id, 'mailbox_id' => $mailboxId]) }}">
+                        <strong>{{ $user->getFullName() }}</strong>
+                    </a><br>
                     <span class="triage-meta">{{ $user->email }}</span>
                 </td>
                 <td>
@@ -141,6 +143,12 @@
                     @else
                         <span class="triage-status ok"><span class="dot"></span>Routing</span>
                     @endif
+                </td>
+                <td class="text-right">
+                    <a href="{{ route('triage.agent', ['id' => $user->id, 'mailbox_id' => $mailboxId]) }}"
+                       class="btn btn-default btn-xs">
+                        {{ ($p && $p->description) ? 'Edit' : 'Set up' }}
+                    </a>
                 </td>
             </tr>
         @endforeach
