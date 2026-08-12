@@ -33,7 +33,7 @@ class VolumeReport
      * Shaped to hit the core composite index on
      * (mailbox_id, created_at, closed_at) added in 2026_04_20.
      */
-    public function conversationsQuery(DateRange $range = null)
+    public function conversationsQuery(?DateRange $range = null)
     {
         $range = $range ?: $this->range;
 
@@ -51,7 +51,7 @@ class VolumeReport
     }
 
     /** Conversations received in the period. */
-    public function received(DateRange $range = null)
+    public function received(?DateRange $range = null)
     {
         return $this->conversationsQuery($range)->count();
     }
@@ -64,13 +64,13 @@ class VolumeReport
      * threads.type = 1 (TYPE_CUSTOMER) is the inbound customer message.
      * state = 2 (STATE_PUBLISHED) excludes drafts.
      */
-    public function inboundMessages(DateRange $range = null)
+    public function inboundMessages(?DateRange $range = null)
     {
         return $this->messagesOfType(\App\Thread::TYPE_CUSTOMER, $range);
     }
 
     /** Agent replies sent in the period. threads.type = 2 (TYPE_MESSAGE). */
-    public function outboundReplies(DateRange $range = null)
+    public function outboundReplies(?DateRange $range = null)
     {
         return $this->messagesOfType(\App\Thread::TYPE_MESSAGE, $range);
     }
@@ -85,7 +85,7 @@ class VolumeReport
      * "inbound messages" would exceed what the rest of the page reports, for
      * no visible reason.
      */
-    protected function messagesOfType($type, DateRange $range = null)
+    protected function messagesOfType($type, ?DateRange $range = null)
     {
         $range = $range ?: $this->range;
 
