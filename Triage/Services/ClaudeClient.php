@@ -163,7 +163,9 @@ class ClaudeClient
         $raw      = curl_exec($ch);
         $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curlErr  = curl_error($ch);
-        curl_close($ch);
+        // curl_close() is deprecated from PHP 8.5 and has been a no-op since
+        // 8.0 - the handle is freed when it goes out of scope.
+        unset($ch);
 
         if ($raw === false) {
             return ['ok' => false, 'body' => [], 'error' => $curlErr, 'http_code' => 0];
