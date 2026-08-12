@@ -13,6 +13,7 @@ class TriageServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->registerConfig();
+        $this->registerViews();
 
         // Hooks are registered inside a try/catch so that a fault in module
         // code cannot take down the whole application. FreeScout boots every
@@ -36,15 +37,37 @@ class TriageServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../Config/config.php', 'triage');
     }
 
+    protected function registerViews()
+    {
+        $this->loadViewsFrom(__DIR__.'/../Resources/views', 'triage');
+    }
+
     protected function registerHooks()
     {
-        // Master kill switch - checked before anything else is wired up.
+        // The settings link is registered regardless of the kill switch, so
+        // the module can always be configured and diagnosed - including when
+        // it is switched off.
+        \Eventy::addFilter('settings.sections', function ($sections) {
+            $sections['triage'] = ['title' => 'Triage', 'icon' => 'random', 'order' => 400];
+            return $sections;
+        });
+
+        \Eventy::addFilter('settings.section_settings', function ($settings, $section) {
+            return $settings;
+        }, 20, 2);
+
+        // Add a Triage entry to the Manage menu.
+        \Eventy::addAction('menu.manage.append', function () {
+            echo '<li><a href="'.route('triage.settings').'">'
+                .'<i class="glyphicon glyphicon-random"></i> Triage</a></li>';
+        });
+
+        // Everything below acts on tickets, so it respects the kill switch.
         if (!config('triage.enabled')) {
             return;
         }
 
-        // Placeholder: triage logic is added in a later phase.
-        // \Eventy::addAction('thread.created', function ($thread) { ... });
+        // Triage and escalation hooks are registered in a later phase.
     }
 
     public function provides()
