@@ -38,6 +38,24 @@ for d in "$REPO"/*/; do
     fi
 done
 
+# FreeScout serves module assets from public/modules/<alias>, via a symlink
+# that only freescout:module-install creates. Without it the module's CSS 404s
+# and /modules/list reports "Invalid or missing modules symlinks".
+#
+# The Public directory must exist at the target first: module-install resolves
+# Modules/<Name> through to its real path, and will not link to something that
+# is not there.
+echo "== Public asset symlinks =="
+for d in "$REPO"/*/; do
+    name=$(basename "$d")
+    [ -f "$d/module.json" ] || continue
+    if [ ! -d "$d/Public" ]; then
+        mkdir -p "$d/Public"
+        echo "  created $name/Public"
+    fi
+done
+sudo -u www-data php "$APP/artisan" freescout:module-install 2>&1 | tail -5
+
 echo "== Migrations =="
 sudo -u www-data php "$APP/artisan" module:migrate --force 2>&1 | tail -3
 
