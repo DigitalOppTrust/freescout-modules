@@ -10,6 +10,24 @@ APP="${FREESCOUT_PATH:-/var/www/freescout}"
 REPO="${MODULES_PATH:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 SITE="${FREESCOUT_SITE:-}"   # e.g. help.example.org - enables the health check
 
+# The app root is often a subdirectory named after the site, e.g.
+# /var/www/freescout/help.example.org. Pointing APP at the parent is silent
+# and destructive-by-omission: every symlink check below simply finds nothing,
+# so the script reports success while cleaning up and linking nothing at all.
+#
+# Rather than guess, fail loudly - and if there is exactly one obvious
+# candidate underneath, name it.
+if [ ! -f "$APP/artisan" ]; then
+    echo "ERROR: no artisan found at $APP - that is not a FreeScout app root."
+
+    for c in "$APP"/*/; do
+        [ -f "$c/artisan" ] && echo "  did you mean:  FREESCOUT_PATH=${c%/} $0 $*"
+    done
+
+    echo "  set FREESCOUT_PATH to the directory containing 'artisan'."
+    exit 1
+fi
+
 if [ "${1:-}" = "--pull" ]; then
     echo "== Pulling =="
     git -C "$REPO" pull --ff-only || { echo "pull failed"; exit 1; }
