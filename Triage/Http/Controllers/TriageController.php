@@ -54,6 +54,7 @@ class TriageController extends Controller
             'users'     => $users,
             'accuracy'  => TriageDecision::accuracy(30),
             'callsToday'=> TriageDecision::callsToday(),
+            'counts'    => TriageDecision::countsByUser(),
         ]);
     }
 
@@ -102,8 +103,12 @@ class TriageController extends Controller
             ->where('status', \App\Conversation::STATUS_ACTIVE)
             ->count();
 
+        $counts = TriageDecision::countsByUser();
+
         return view('triage::agent', [
             'user'           => $user,
+            'counts'         => $counts[$user->id] ?? null,
+            'recent'         => TriageDecision::forUser($user->id, 10),
             'users'          => $users,
             'profile'        => $profile,
             'mailboxId'      => $mailboxId,

@@ -41,6 +41,51 @@ class TriageDecision extends Model
     }
 
     /**
+     * Per-user triage counts, keyed by user id.
+     *
+     * Counted from suggested_user_id rather than the conversation's current
+     * assignee: this measures what triage *decided*, which is the question.
+     * A ticket later reassigned by a human still counts as a triage to the
+     * original suggestion, and shows up separately as an override.
+     *
+     * @return array<int, array{total:int, applied:int, overridden:int, last_at:?string}>
+     */
+    public static function countsByUser($days = null)
+    {
+        $q = self::selectRaw('suggested_user_id AS uid')
+            ->selectRaw('COUNT(*) AS total')
+            ->selectRaw('SUM(applied) AS applied')
+            ->selectRaw('SUM(overridden_by_user_id IS NOT NULL) AS overridden')
+            ->selectRaw('MAX(created_at) AS last_at')
+            ->whereNotNull('suggested_user_id');
+
+        if ($days) {
+            $q->where('created_at', '>=', date('Y-m-d H:i:s', strtotime("-{$days} days")));
+        }
+
+        $out = [];
+        foreach ($q->groupBy('suggested_user_id')->get() as $row) {
+            $out[(int) $row->uid] = [
+                'total'      => (int) $row->total,
+                'applied'    => (int) $row->applied,
+                'overridden' => (int) $row->overridden,
+                'last_at'    => $row->last_at,
+            ];
+        }
+
+        return $out;
+    }
+
+    /** Recent decisions for one user, for the agent detail page. */
+    public static function forUser($userId, $limit = 10)
+    {
+        return self::where('suggested_user_id', (int) $userId)
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get();
+    }
+
+    /**
      * Routing accuracy over a window: of the decisions that were applied and
      * subsequently reviewed, how many were left alone by a human.
      *

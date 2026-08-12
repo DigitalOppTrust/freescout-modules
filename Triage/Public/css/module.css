@@ -67,3 +67,7 @@
     font-weight: normal;
     margin-right: 10px;
 }
+
+/* ── Recent decisions ───────────────────────────────────── */
+.triage-recent { font-size: 12px; margin-top: -10px; }
+.triage-recent td { vertical-align: middle; }

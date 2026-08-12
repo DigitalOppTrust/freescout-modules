@@ -45,6 +45,7 @@
                 <th>Rotation</th>
                 <th>Escalates to</th>
                 <th class="text-center">SLA</th>
+                <th class="text-center">Triaged</th>
                 <th class="text-center">Status</th>
                 <th></th>
             </tr>
@@ -90,6 +91,17 @@
                         <span class="triage-meta">{{ \Modules\Triage\Services\BusinessTime::describe(config('triage.escalate_after_minutes')) }}</span>
                     @else
                         <span class="triage-meta">—</span>
+                    @endif
+                </td>
+                <td class="text-center">
+                    @php $c = $counts[$user->id] ?? null; @endphp
+                    @if ($c)
+                        <strong>{{ $c['total'] }}</strong>
+                        @if ($c['overridden'])
+                            <br><span class="triage-meta">{{ $c['overridden'] }} overridden</span>
+                        @endif
+                    @else
+                        <span class="triage-meta">0</span>
                     @endif
                 </td>
                 <td class="text-center">

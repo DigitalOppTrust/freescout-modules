@@ -17,6 +17,75 @@
 
     @include('partials/flash_messages')
 
+    {{-- ── Triage activity ───────────────────────────────────────── --}}
+    <div class="panel panel-default">
+        <div class="panel-heading"><strong>Triage activity</strong></div>
+        <div class="panel-body">
+            @if ($counts)
+                <div class="triage-stats">
+                    <span><span class="triage-meta">Times triaged here</span>
+                        <strong>{{ $counts['total'] }}</strong></span>
+                    <span><span class="triage-meta">Auto-assigned</span>
+                        <strong>{{ $counts['applied'] }}</strong></span>
+                    <span><span class="triage-meta">Later reassigned by a human</span>
+                        <strong class="{{ $counts['overridden'] ? 'text-danger' : '' }}">{{ $counts['overridden'] }}</strong></span>
+                    <span><span class="triage-meta">Most recent</span>
+                        <strong>{{ $counts['last_at'] ? \Carbon\Carbon::parse($counts['last_at'])->diffForHumans() : '—' }}</strong></span>
+                </div>
+            @else
+                <p class="triage-meta" style="margin:0;">
+                    No tickets have been routed to this agent yet.
+                    @if (!config('triage.enabled'))
+                        Triage is currently disabled.
+                    @endif
+                </p>
+            @endif
+        </div>
+    </div>
+
+    @if (count($recent))
+        <table class="table table-condensed triage-recent">
+            <thead>
+                <tr>
+                    <th>When</th>
+                    <th>Conversation</th>
+                    <th>Why this agent</th>
+                    <th class="text-center">Confidence</th>
+                    <th class="text-center">Outcome</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach ($recent as $d)
+                <tr>
+                    <td class="triage-meta">{{ $d->created_at->diffForHumans() }}</td>
+                    <td>
+                        @if ($d->conversation)
+                            <a href="{{ route('conversations.view', ['id' => $d->conversation_id]) }}">
+                                #{{ $d->conversation->number }}
+                            </a>
+                        @else
+                            <span class="triage-meta">—</span>
+                        @endif
+                    </td>
+                    <td class="triage-meta">{{ \Illuminate\Support\Str::limit($d->reasoning, 70) }}</td>
+                    <td class="text-center triage-confidence">
+                        {{ $d->confidence !== null ? number_format($d->confidence, 2) : '—' }}
+                    </td>
+                    <td class="text-center">
+                        @if ($d->overridden_by_user_id)
+                            <span class="triage-status warn"><span class="dot"></span>Reassigned</span>
+                        @elseif ($d->applied)
+                            <span class="triage-status ok"><span class="dot"></span>Assigned</span>
+                        @else
+                            <span class="triage-status off"><span class="dot"></span>Suggested</span>
+                        @endif
+                    </td>
+                </tr>
+            @endforeach
+            </tbody>
+        </table>
+    @endif
+
     <form method="POST" action="{{ route('triage.profile.save') }}" class="form-horizontal">
         {{ csrf_field() }}
         <input type="hidden" name="user_id" value="{{ $user->id }}">
