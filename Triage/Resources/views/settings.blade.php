@@ -13,47 +13,6 @@
 
     @include('partials/flash_messages')
 
-    {{-- ── Connection status ─────────────────────────────────────── --}}
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <strong>Claude connection</strong>
-            <button type="button" class="btn btn-default btn-xs pull-right"
-                    id="triage-test-connection"
-                    data-url="{{ route('triage.test') }}">Test connection</button>
-        </div>
-        <div class="panel-body">
-            <p id="triage-connection-result" style="margin-bottom:12px;">
-                @if (config('triage.api_key'))
-                    <span class="triage-meta">Key configured — click Test connection to verify.</span>
-                @else
-                    <span class="triage-status fail"><span class="dot"></span>No API key</span>
-                    <span class="triage-meta">Set CLAUDE_API_KEY in the FreeScout .env file.</span>
-                @endif
-            </p>
-            <div class="triage-stats">
-                <span><span class="triage-meta">Model</span><strong>{{ config('triage.model') }}</strong></span>
-                <span><span class="triage-meta">Triage</span>
-                    <strong class="{{ config('triage.enabled') ? 'text-success' : 'text-muted' }}">
-                        {{ config('triage.enabled') ? 'enabled' : 'disabled' }}
-                    </strong>
-                </span>
-                <span><span class="triage-meta">Mode</span>
-                    <strong>{{ config('triage.auto_assign') ? 'auto-assign' : 'suggest only' }}</strong>
-                </span>
-                <span><span class="triage-meta">API calls today</span>
-                    <strong>{{ $callsToday }}</strong>
-                    <span class="triage-meta">/ {{ config('triage.daily_call_limit') }}</span>
-                </span>
-                @if ($accuracy)
-                    <span><span class="triage-meta">Accuracy (30d)</span>
-                        <strong>{{ $accuracy['accuracy'] }}%</strong>
-                        <span class="triage-meta">{{ $accuracy['overridden'] }}/{{ $accuracy['applied'] }} overridden</span>
-                    </span>
-                @endif
-            </div>
-        </div>
-    </div>
-
     {{-- ── Mailbox selector ──────────────────────────────────────── --}}
     @if ($mailboxes->count() > 1)
         <form method="GET" class="form-inline" style="margin-bottom:15px;">
@@ -126,9 +85,9 @@
                 </td>
                 <td class="text-center">
                     @if ($p && $p->escalate_after_minutes)
-                        {{ $p->escalate_after_minutes }}m
+                        {{ \Modules\Triage\Services\BusinessTime::describe($p->escalate_after_minutes) }}
                     @elseif ($p)
-                        <span class="triage-meta">{{ config('triage.escalate_after_minutes') }}m</span>
+                        <span class="triage-meta">{{ \Modules\Triage\Services\BusinessTime::describe(config('triage.escalate_after_minutes')) }}</span>
                     @else
                         <span class="triage-meta">—</span>
                     @endif
@@ -159,6 +118,47 @@
         {{ $profiles->filter(function($p){ return $p->description && $p->available; })->count() }}
         of {{ $users->count() }} agents available for routing.
     </p>
+
+    {{-- ── Connection status ─────────────────────────────────────── --}}
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <strong>Claude connection</strong>
+            <button type="button" class="btn btn-default btn-xs pull-right"
+                    id="triage-test-connection"
+                    data-url="{{ route('triage.test') }}">Test connection</button>
+        </div>
+        <div class="panel-body">
+            <p id="triage-connection-result" style="margin-bottom:12px;">
+                @if (config('triage.api_key'))
+                    <span class="triage-meta">Key configured — click Test connection to verify.</span>
+                @else
+                    <span class="triage-status fail"><span class="dot"></span>No API key</span>
+                    <span class="triage-meta">Set CLAUDE_API_KEY in the FreeScout .env file.</span>
+                @endif
+            </p>
+            <div class="triage-stats">
+                <span><span class="triage-meta">Model</span><strong>{{ config('triage.model') }}</strong></span>
+                <span><span class="triage-meta">Triage</span>
+                    <strong class="{{ config('triage.enabled') ? 'text-success' : 'text-muted' }}">
+                        {{ config('triage.enabled') ? 'enabled' : 'disabled' }}
+                    </strong>
+                </span>
+                <span><span class="triage-meta">Mode</span>
+                    <strong>{{ config('triage.auto_assign') ? 'auto-assign' : 'suggest only' }}</strong>
+                </span>
+                <span><span class="triage-meta">API calls today</span>
+                    <strong>{{ $callsToday }}</strong>
+                    <span class="triage-meta">/ {{ config('triage.daily_call_limit') }}</span>
+                </span>
+                @if ($accuracy)
+                    <span><span class="triage-meta">Accuracy (30d)</span>
+                        <strong>{{ $accuracy['accuracy'] }}%</strong>
+                        <span class="triage-meta">{{ $accuracy['overridden'] }}/{{ $accuracy['applied'] }} overridden</span>
+                    </span>
+                @endif
+            </div>
+        </div>
+    </div>
 
 </div>
 @endsection

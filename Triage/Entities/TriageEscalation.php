@@ -3,6 +3,7 @@
 namespace Modules\Triage\Entities;
 
 use Illuminate\Database\Eloquent\Model;
+use Modules\Triage\Services\BusinessTime;
 
 class TriageEscalation extends Model
 {
@@ -42,14 +43,29 @@ class TriageEscalation extends Model
         $this->chain = implode(',', $ids);
     }
 
-    /** Minutes elapsed since the clock started. */
+    /**
+     * Working minutes elapsed since the clock started.
+     *
+     * Counts business time, not wall-clock: a ticket that sits over a weekend
+     * has not consumed its SLA, because nobody was going to answer it.
+     */
     public function minutesElapsed()
     {
         if (!$this->clock_started_at) {
             return 0;
         }
 
-        return (int) round((time() - $this->clock_started_at->timestamp) / 60);
+        return BusinessTime::minutesBetween($this->clock_started_at, new \DateTimeImmutable());
+    }
+
+    /** When this ticket will escalate, for display. */
+    public function escalatesAt()
+    {
+        if (!$this->clock_started_at) {
+            return null;
+        }
+
+        return BusinessTime::addMinutes($this->clock_started_at, $this->escalate_after_minutes);
     }
 
     /** Stage 1: notify the escalation target. */
@@ -73,7 +89,7 @@ class TriageEscalation extends Model
 
         $grace = (int) config('triage.reassign_after_minutes', 120);
 
-        return (time() - $this->notified_at->timestamp) / 60 >= $grace;
+        return BusinessTime::minutesBetween($this->notified_at, new \DateTimeImmutable()) >= $grace;
     }
 
     /**

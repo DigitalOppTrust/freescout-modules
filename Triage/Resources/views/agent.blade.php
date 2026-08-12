@@ -86,6 +86,11 @@
                 {{ config('triage.reassign_after_minutes') }} minutes later, the ticket
                 transfers to them.
             </p>
+            <p>
+                <strong>Weekends are not counted.</strong> A ticket arriving Friday
+                afternoon with a one-working-day window escalates on Monday afternoon,
+                not over the weekend.
+            </p>
         </div>
 
         <div class="form-group">
@@ -108,16 +113,19 @@
 
         <div class="form-group">
             <label class="col-sm-3 control-label">Escalate after</label>
-            <div class="col-sm-3">
-                <div class="input-group">
-                    <input type="number" name="escalate_after_minutes" class="form-control"
-                        value="{{ old('escalate_after_minutes', $profile->escalate_after_minutes ?? '') }}"
-                        placeholder="{{ config('triage.escalate_after_minutes') }}" min="1">
-                    <span class="input-group-addon">min</span>
-                </div>
-                <p class="help-block">
-                    Blank uses the default ({{ config('triage.escalate_after_minutes') }} min).
-                </p>
+            <div class="col-sm-4">
+                <select name="escalate_after_minutes" class="form-control">
+                    <option value="">
+                        Default — {{ \Modules\Triage\Services\BusinessTime::describe(config('triage.escalate_after_minutes')) }}
+                    </option>
+                    @foreach ([240 => '4 hours', 480 => '8 hours', 1440 => '1 working day', 2880 => '2 working days', 4320 => '3 working days', 7200 => '5 working days'] as $mins => $label)
+                        <option value="{{ $mins }}"
+                            {{ (string) old('escalate_after_minutes', $profile->escalate_after_minutes ?? '') === (string) $mins ? 'selected' : '' }}>
+                            {{ $label }}
+                        </option>
+                    @endforeach
+                </select>
+                <p class="help-block">Working time — weekends excluded.</p>
             </div>
         </div>
 

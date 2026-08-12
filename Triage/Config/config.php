@@ -26,9 +26,15 @@ return [
     // accuracy before granting autonomy.
     'auto_assign' => env('TRIAGE_AUTO_ASSIGN', false),
 
-    // Default minutes without a reply to the customer before escalating.
-    // Per-agent profiles can override this.
-    'escalate_after_minutes' => env('TRIAGE_ESCALATE_AFTER', 240),
+    // Default working time without a reply to the customer before escalating.
+    // 1440 = one working day. Per-agent profiles can override this.
+    'escalate_after_minutes' => env('TRIAGE_ESCALATE_AFTER', 1440),
+
+    // Escalation clocks count working time only, so a ticket arriving on
+    // Friday afternoon does not escalate over the weekend. ISO-8601 day
+    // numbers: 6 = Saturday, 7 = Sunday.
+    'weekend_days' => array_filter(array_map('intval',
+        explode(',', (string) env('TRIAGE_WEEKEND_DAYS', '6,7')))),
 
     // After the escalation target is notified, how long before ownership
     // actually transfers to them.
