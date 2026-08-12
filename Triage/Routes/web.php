@@ -12,6 +12,7 @@
  */
 
 Route::get('/settings', 'TriageController@settings')->name('triage.settings');
+Route::get('/settings/agent/{id}', 'TriageController@agent')->name('triage.agent');
 Route::post('/settings/profile', 'TriageController@saveProfile')->name('triage.profile.save');
 Route::post('/settings/profile/delete', 'TriageController@deleteProfile')->name('triage.profile.delete');
 Route::get('/settings/test-connection', 'TriageController@testConnection')->name('triage.test');

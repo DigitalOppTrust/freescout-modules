@@ -57,6 +57,62 @@ class TriageController extends Controller
         ]);
     }
 
+    /** Edit one agent's routing and escalation setup. */
+    public function agent(Request $request, $id)
+    {
+        $user = \App\User::findOrFail((int) $id);
+
+        $mailboxId = $request->get('mailbox_id') ?: null;
+        if (!$mailboxId && \App\Mailbox::count() === 1) {
+            $mailboxId = \App\Mailbox::first()->id;
+        }
+
+        $profile = TriageProfile::where('user_id', $user->id)
+            ->where(function ($q) use ($mailboxId) {
+                $q->where('mailbox_id', $mailboxId)->orWhereNull('mailbox_id');
+            })
+            ->first();
+
+        $users = \App\User::where('status', \App\User::STATUS_ACTIVE)
+            ->orderBy('first_name')
+            ->get();
+
+        // Existing groups, offered as autocomplete so a typo does not
+        // silently create a one-person "group".
+        $rotationGroups = TriageProfile::whereNotNull('rotation_group')
+            ->distinct()
+            ->pluck('rotation_group')
+            ->filter()
+            ->values()
+            ->all();
+
+        // Who else is already in this agent's group, so the effect of the
+        // setting is visible rather than implied.
+        $groupPeers = [];
+        if ($profile && $profile->rotation_group) {
+            $groupPeers = TriageProfile::with('user')
+                ->where('rotation_group', $profile->rotation_group)
+                ->where('user_id', '!=', $user->id)
+                ->get()
+                ->map(function ($p) { return $p->userName(); })
+                ->all();
+        }
+
+        $openCount = \App\Conversation::where('user_id', $user->id)
+            ->where('status', \App\Conversation::STATUS_ACTIVE)
+            ->count();
+
+        return view('triage::agent', [
+            'user'           => $user,
+            'users'          => $users,
+            'profile'        => $profile,
+            'mailboxId'      => $mailboxId,
+            'rotationGroups' => $rotationGroups,
+            'groupPeers'     => $groupPeers,
+            'openCount'      => $openCount,
+        ]);
+    }
+
     /** AJAX: live Claude API check for the status panel. */
     public function testConnection()
     {
@@ -71,7 +127,7 @@ class TriageController extends Controller
         $mailboxId = $request->input('mailbox_id') ?: null;
 
         if (!$userId) {
-            return redirect()->back()->with('error', 'No user specified.');
+            return redirect()->route('triage.settings')->with('error', 'No user specified.');
         }
 
         $escalateTo = $request->input('escalate_to_user_id') ?: null;
@@ -79,7 +135,8 @@ class TriageController extends Controller
         // Reject self-escalation and loops at save time rather than
         // discovering them when a ticket is already stuck mid-chain.
         if ($escalateTo && (int) $escalateTo === $userId) {
-            return redirect()->back()->with('error', 'A user cannot escalate to themselves.');
+            return redirect()->back()->withInput()
+                ->with('error', 'A user cannot escalate to themselves.');
         }
 
         if ($escalateTo) {
@@ -90,7 +147,7 @@ class TriageController extends Controller
                     return $u ? $u->getFullName() : ('User '.$id);
                 }, $loop);
 
-                return redirect()->back()->with(
+                return redirect()->back()->withInput()->with(
                     'error',
                     'That escalation target creates a loop: '.implode(' → ', $names)
                 );
@@ -110,7 +167,9 @@ class TriageController extends Controller
             ]
         );
 
-        return redirect()->back()->with('success', 'Profile saved.');
+        return redirect()
+            ->route('triage.settings', ['mailbox_id' => $mailboxId])
+            ->with('success', 'Saved '.(\App\User::find($userId)->getFullName() ?? 'profile').'.');
     }
 
     /** Remove an agent from triage routing entirely. */
@@ -120,7 +179,9 @@ class TriageController extends Controller
             ->where('mailbox_id', $request->input('mailbox_id') ?: null)
             ->delete();
 
-        return redirect()->back()->with('success', 'Profile removed.');
+        return redirect()
+            ->route('triage.settings', ['mailbox_id' => $request->input('mailbox_id') ?: null])
+            ->with('success', 'Profile removed.');
     }
 
     /** Recent routing decisions, for reviewing accuracy. */

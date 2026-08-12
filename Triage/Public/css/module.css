@@ -34,3 +34,35 @@
     font-family: monospace;
     font-size: 12px;
 }
+
+/* ── Agent list ─────────────────────────────────────────── */
+.triage-agents td { vertical-align: middle; font-size: 13px; }
+.triage-agent-row { cursor: pointer; }
+.triage-agent-row:hover { background: #f0f6fb !important; }
+
+.triage-status.off      { background: #f4f4f4; color: #7f8c8d; }
+.triage-status.off .dot { background: #b0b7bd; }
+
+/* ── Connection stat row ────────────────────────────────── */
+.triage-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 22px;
+}
+.triage-stats > span {
+    display: flex;
+    flex-direction: column;
+    font-size: 13px;
+}
+.triage-stats .triage-meta {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 2px;
+}
+
+.triage-back {
+    font-size: 13px;
+    font-weight: normal;
+    margin-right: 10px;
+}
