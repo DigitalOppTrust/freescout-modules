@@ -26,6 +26,27 @@ if [ "$FAIL" -ne 0 ]; then
 fi
 echo "  all files parse"
 
+# Modules renamed to a DOT prefix in Aug 2026. Their old symlinks and public
+# asset directories must go, or FreeScout registers both the old and new module
+# and boots two copies of the same service provider - duplicate menu entries,
+# and two sets of hooks acting on the same ticket.
+#
+# Only ever removes SYMLINKS, never real directories, so a genuine module that
+# happens to share the name is left alone.
+echo "== Removing superseded module links =="
+for old in Triage Reports; do
+    if [ -L "$APP/Modules/$old" ]; then
+        sudo rm -f "$APP/Modules/$old"
+        echo "  unlinked Modules/$old"
+    fi
+done
+for old in triage reports; do
+    if [ -L "$APP/public/modules/$old" ]; then
+        sudo rm -f "$APP/public/modules/$old"
+        echo "  unlinked public/modules/$old"
+    fi
+done
+
 echo "== Symlinks =="
 for d in "$REPO"/*/; do
     name=$(basename "$d")
@@ -55,6 +76,26 @@ for d in "$REPO"/*/; do
     fi
 done
 sudo -u www-data php "$APP/artisan" freescout:module-install 2>&1 | tail -5
+
+# The modules table keys on alias and holds the enabled flag, so the renamed
+# modules arrive as new rows and start DISABLED. The old rows are orphans -
+# their code is gone, but they still show on the Modules page.
+#
+# Dropping them here rather than by hand keeps the deploy repeatable. Enabling
+# the new ones is left to a human: switching on a module that acts on tickets
+# should be a deliberate decision, not a side effect of a deploy.
+# Uses mariadb directly rather than artisan tinker: FreeScout ships
+# laravel/tinker 1.0.7, which has no --execute flag (that arrived in 2.x), so
+# the artisan route would just open an interactive shell and hang a deploy.
+echo "== Superseded module rows =="
+if command -v mariadb >/dev/null 2>&1; then
+    sudo mariadb -N -B -e \
+        "DELETE FROM freescout.modules WHERE alias IN ('triage','reports');
+         SELECT CONCAT('  removed ', ROW_COUNT(), ' stale module row(s)');"
+else
+    echo "  SKIPPED - mariadb client not found; remove rows manually:"
+    echo "    DELETE FROM freescout.modules WHERE alias IN ('triage','reports');"
+fi
 
 echo "== Migrations =="
 sudo -u www-data php "$APP/artisan" module:migrate --force 2>&1 | tail -3

@@ -1,0 +1,19 @@
+{
+    "name": "DOTTriage",
+    "alias": "dottriage",
+    "description": "AI-assisted ticket routing and SLA escalation",
+    "version": "0.1.0",
+    "detailsUrl": "",
+    "author": "DO Trust",
+    "requiredAppVersion": "1.8.0",
+    "license": "",
+    "keywords": [],
+    "active": 1,
+    "order": 0,
+    "providers": [
+        "Modules\\DOTTriage\\Providers\\TriageServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

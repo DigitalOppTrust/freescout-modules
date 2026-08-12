@@ -7,8 +7,8 @@ Custom [FreeScout](https://freescout.net/) modules built and maintained by
 
 | Module | Status | Description |
 |---|---|---|
-| `Triage` | In development | AI-assisted ticket routing and SLA escalation |
-| `Reports` | In development | Volume, triage effectiveness and resolution reporting |
+| `DOTTriage` | In development | AI-assisted ticket routing and SLA escalation |
+| `DOTReports` | In development | Volume, triage effectiveness and resolution reporting |
 
 ### Triage
 
@@ -34,7 +34,7 @@ automatically, and how long issues take to answer and resolve.
   business-time calendar so the two modules cannot disagree
 - Creates no tables and registers no hooks that act on tickets
 
-See [`Reports/README.md`](Reports/README.md) for the metric definitions.
+See [`DOTReports/README.md`](DOTReports/README.md) for the metric definitions.
 
 ## Installation
 
@@ -44,13 +44,29 @@ intended to live in separate repositories.
 
 ```bash
 git clone https://github.com/DigitalOppTrust/freescout-modules.git /opt/freescout-modules
-ln -s /opt/freescout-modules/Triage /path/to/freescout/Modules/Triage
+ln -s /opt/freescout-modules/DOTTriage  /path/to/freescout/Modules/DOTTriage
+ln -s /opt/freescout-modules/DOTReports /path/to/freescout/Modules/DOTReports
 cd /path/to/freescout
 php artisan freescout:module-install
 php artisan freescout:clear-cache
 ```
 
-Enable the module in **Manage → Modules**.
+Enable the modules in **Manage → Modules**.
+
+`deploy.sh` does all of the above, including the public asset symlinks that
+`freescout:module-install` creates.
+
+### Why the `DOT` prefix
+
+FreeScout matches installed modules against its own module directory **by
+alias**, and offers the directory's version as an update to anything sharing
+one. A module called `reports` therefore collides with the official *paid*
+Reports module, which FreeScout then advertises as an upgrade — and installing
+it would overwrite ours.
+
+Every module here is prefixed `DOT` (`dottriage`, `dotreports`) so the alias
+namespace is ours alone. The alias also determines the public asset path, so
+stylesheets live under `public/modules/dottriage` and `public/modules/dotreports`.
 
 ## Configuration
 
