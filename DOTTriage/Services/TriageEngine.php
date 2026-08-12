@@ -198,11 +198,26 @@ class TriageEngine
             ];
         }
 
+        $reasoning = isset($json['reasoning']) ? mb_substr((string) $json['reasoning'], 0, 500) : '';
+
+        // Models reliably explain *why* something is not a support request but
+        // do not always set the boolean asked for. Treat a confident "no agent
+        // fits" plus reasoning that says so as not_support, rather than
+        // leaving obvious newsletter mail sitting in the queue.
+        $notSupport = !empty($json['not_support']);
+
+        if (!$notSupport
+            && $userId === null
+            && (float) ($json['confidence'] ?? 0) >= 0.8
+            && preg_match('/\b(not a (customer )?support|newsletter|promotional|marketing|automated notification|no-reply|unsolicited)\b/i', $reasoning)) {
+            $notSupport = true;
+        }
+
         return [
             'user_id'     => $userId,
             'confidence'  => isset($json['confidence']) ? (float) $json['confidence'] : 0.0,
-            'not_support' => !empty($json['not_support']),
-            'reasoning'   => isset($json['reasoning']) ? mb_substr((string) $json['reasoning'], 0, 500) : '',
+            'not_support' => $notSupport,
+            'reasoning'   => $reasoning,
         ];
     }
 
