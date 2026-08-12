@@ -121,6 +121,15 @@ class TriageServiceProvider extends ServiceProvider
             return;
         }
 
+        // thread.created can fire more than once for the same thread, and the
+        // decision row does not exist until the job runs - so the check above
+        // cannot catch a duplicate dispatched microseconds later. An atomic
+        // cache lock closes that window.
+        $lock = 'triage.queued.'.$conversation->id;
+        if (!\Cache::add($lock, 1, 300)) {
+            return;
+        }
+
         \Modules\Triage\Jobs\TriageConversation::dispatch($conversation->id);
     }
 

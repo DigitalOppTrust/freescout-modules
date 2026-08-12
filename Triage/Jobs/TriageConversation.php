@@ -55,6 +55,16 @@ class TriageConversation implements ShouldQueue
             return;
         }
 
+        // Belt and braces: even with the dispatch lock, never write a second
+        // decision for a conversation that already has one.
+        $existing = \Modules\Triage\Entities\TriageDecision::where('conversation_id', $conversation->id)
+            ->whereNull('error')
+            ->exists();
+        if ($existing) {
+            \Log::info('[Triage] conversation '.$conversation->id.' already has a decision, skipping');
+            return;
+        }
+
         $decision = (new TriageEngine())->triage($conversation);
 
         if ($decision->error) {
