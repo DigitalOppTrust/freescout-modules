@@ -72,17 +72,21 @@ class ResolutionReport
     protected function resolvedRows()
     {
         // The fallback source: the most recent status-change line item per
-        // conversation. Joined as a subquery so this stays one round trip.
-        $lineitems = DB::table('threads')
-            ->selectRaw('conversation_id, MAX(created_at) as lineitem_closed_at')
-            ->where('type', \App\Thread::TYPE_LINEITEM)
-            ->where('action_type', \App\Thread::ACTION_TYPE_STATUS_CHANGED)
-            ->groupBy('conversation_id');
-
+        // conversation, joined as a derived table so this stays one round
+        // trip.
+        //
+        // Written as a raw join rather than leftJoinSub() because FreeScout
+        // runs Laravel 5.5, where joinSub()/leftJoinSub() do not exist -
+        // calling them throws BadMethodCallException at runtime. Same for
+        // every other subquery join in this module.
         $q = DB::table('conversations')
-            ->leftJoinSub($lineitems, 'li', function ($join) {
-                $join->on('li.conversation_id', '=', 'conversations.id');
-            })
+            ->leftJoin(DB::raw(
+                '(SELECT conversation_id, MAX(created_at) as lineitem_closed_at
+                    FROM threads
+                   WHERE type = '.(int) \App\Thread::TYPE_LINEITEM.'
+                     AND action_type = '.(int) \App\Thread::ACTION_TYPE_STATUS_CHANGED.'
+                   GROUP BY conversation_id) as li'
+            ), 'li.conversation_id', '=', 'conversations.id')
             ->whereBetween('conversations.created_at', [
                 $this->range->startSql(), $this->range->endSql(),
             ])
@@ -188,17 +192,15 @@ class ResolutionReport
      */
     public function firstResponseTimes()
     {
-        $firstReplies = DB::table('threads')
-            ->selectRaw('conversation_id, MIN(created_at) as first_reply_at')
-            ->where('type', \App\Thread::TYPE_MESSAGE)
-            ->where('state', \App\Thread::STATE_PUBLISHED)
-            ->where('imported', 0)
-            ->groupBy('conversation_id');
-
         $q = DB::table('conversations')
-            ->joinSub($firstReplies, 'fr', function ($join) {
-                $join->on('fr.conversation_id', '=', 'conversations.id');
-            })
+            ->join(DB::raw(
+                '(SELECT conversation_id, MIN(created_at) as first_reply_at
+                    FROM threads
+                   WHERE type = '.(int) \App\Thread::TYPE_MESSAGE.'
+                     AND state = '.(int) \App\Thread::STATE_PUBLISHED.'
+                     AND imported = 0
+                   GROUP BY conversation_id) as fr'
+            ), 'fr.conversation_id', '=', 'conversations.id')
             ->whereBetween('conversations.created_at', [
                 $this->range->startSql(), $this->range->endSql(),
             ])
@@ -250,17 +252,15 @@ class ResolutionReport
      */
     public function replyEffort()
     {
-        $replyCounts = DB::table('threads')
-            ->selectRaw('conversation_id, COUNT(*) as replies')
-            ->where('type', \App\Thread::TYPE_MESSAGE)
-            ->where('state', \App\Thread::STATE_PUBLISHED)
-            ->where('imported', 0)
-            ->groupBy('conversation_id');
-
         $q = DB::table('conversations')
-            ->joinSub($replyCounts, 'rc', function ($join) {
-                $join->on('rc.conversation_id', '=', 'conversations.id');
-            })
+            ->join(DB::raw(
+                '(SELECT conversation_id, COUNT(*) as replies
+                    FROM threads
+                   WHERE type = '.(int) \App\Thread::TYPE_MESSAGE.'
+                     AND state = '.(int) \App\Thread::STATE_PUBLISHED.'
+                     AND imported = 0
+                   GROUP BY conversation_id) as rc'
+            ), 'rc.conversation_id', '=', 'conversations.id')
             ->whereBetween('conversations.created_at', [
                 $this->range->startSql(), $this->range->endSql(),
             ])

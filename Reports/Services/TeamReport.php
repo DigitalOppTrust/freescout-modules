@@ -95,16 +95,23 @@ class TeamReport
     /** Published agent replies per user in the period. */
     protected function repliesByUser()
     {
+        // Always joins conversations so the spam / deleted / imported
+        // exclusions apply here exactly as they do everywhere else. Counting
+        // replies to spam would inflate an agent's row for work that the rest
+        // of the module does not acknowledge exists.
         $q = DB::table('threads')
+            ->join('conversations', 'conversations.id', '=', 'threads.conversation_id')
             ->whereBetween('threads.created_at', [$this->range->startSql(), $this->range->endSql()])
             ->where('threads.type', \App\Thread::TYPE_MESSAGE)
             ->where('threads.state', \App\Thread::STATE_PUBLISHED)
             ->where('threads.imported', 0)
-            ->whereNotNull('threads.created_by_user_id');
+            ->whereNotNull('threads.created_by_user_id')
+            ->where('conversations.state', '!=', \App\Conversation::STATE_DELETED)
+            ->where('conversations.status', '!=', \App\Conversation::STATUS_SPAM)
+            ->where('conversations.imported', 0);
 
         if ($this->mailboxId) {
-            $q->join('conversations', 'conversations.id', '=', 'threads.conversation_id')
-              ->where('conversations.mailbox_id', $this->mailboxId);
+            $q->where('conversations.mailbox_id', $this->mailboxId);
         }
 
         return $q->selectRaw('threads.created_by_user_id as uid, COUNT(*) as total')
@@ -222,18 +229,18 @@ class TeamReport
      */
     protected function timingsByUser()
     {
-        // Earliest published agent reply per conversation, with its author.
-        $firstReplies = DB::table('threads as t')
-            ->selectRaw('t.conversation_id, MIN(t.created_at) as first_reply_at')
-            ->where('t.type', \App\Thread::TYPE_MESSAGE)
-            ->where('t.state', \App\Thread::STATE_PUBLISHED)
-            ->where('t.imported', 0)
-            ->groupBy('t.conversation_id');
-
+        // Earliest published agent reply per conversation, as a derived
+        // table. Raw rather than joinSub() - FreeScout runs Laravel 5.5,
+        // which has no joinSub().
         $q = DB::table('conversations')
-            ->joinSub($firstReplies, 'fr', function ($join) {
-                $join->on('fr.conversation_id', '=', 'conversations.id');
-            })
+            ->join(DB::raw(
+                '(SELECT conversation_id, MIN(created_at) as first_reply_at
+                    FROM threads
+                   WHERE type = '.(int) \App\Thread::TYPE_MESSAGE.'
+                     AND state = '.(int) \App\Thread::STATE_PUBLISHED.'
+                     AND imported = 0
+                   GROUP BY conversation_id) as fr'
+            ), 'fr.conversation_id', '=', 'conversations.id')
             // Re-join threads to recover who actually sent that first reply.
             ->join('threads as ft', function ($join) {
                 $join->on('ft.conversation_id', '=', 'conversations.id')
@@ -302,16 +309,14 @@ class TeamReport
      */
     public function unassignedDwell()
     {
-        $firstAssign = DB::table('threads')
-            ->selectRaw('conversation_id, MIN(created_at) as assigned_at')
-            ->where('type', \App\Thread::TYPE_LINEITEM)
-            ->where('action_type', \App\Thread::ACTION_TYPE_USER_CHANGED)
-            ->groupBy('conversation_id');
-
         $q = DB::table('conversations')
-            ->joinSub($firstAssign, 'fa', function ($join) {
-                $join->on('fa.conversation_id', '=', 'conversations.id');
-            })
+            ->join(DB::raw(
+                '(SELECT conversation_id, MIN(created_at) as assigned_at
+                    FROM threads
+                   WHERE type = '.(int) \App\Thread::TYPE_LINEITEM.'
+                     AND action_type = '.(int) \App\Thread::ACTION_TYPE_USER_CHANGED.'
+                   GROUP BY conversation_id) as fa'
+            ), 'fa.conversation_id', '=', 'conversations.id')
             ->whereBetween('conversations.created_at', [
                 $this->range->startSql(), $this->range->endSql(),
             ])

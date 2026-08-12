@@ -66,36 +66,41 @@ class VolumeReport
      */
     public function inboundMessages(DateRange $range = null)
     {
-        $range = $range ?: $this->range;
-
-        $q = DB::table('threads')
-            ->whereBetween('threads.created_at', [$range->startSql(), $range->endSql()])
-            ->where('threads.type', \App\Thread::TYPE_CUSTOMER)
-            ->where('threads.state', \App\Thread::STATE_PUBLISHED)
-            ->where('threads.imported', 0);
-
-        if ($this->mailboxId) {
-            $q->join('conversations', 'conversations.id', '=', 'threads.conversation_id')
-              ->where('conversations.mailbox_id', $this->mailboxId);
-        }
-
-        return $q->count();
+        return $this->messagesOfType(\App\Thread::TYPE_CUSTOMER, $range);
     }
 
     /** Agent replies sent in the period. threads.type = 2 (TYPE_MESSAGE). */
     public function outboundReplies(DateRange $range = null)
     {
+        return $this->messagesOfType(\App\Thread::TYPE_MESSAGE, $range);
+    }
+
+    /**
+     * Published, non-imported threads of one type, counted in the period.
+     *
+     * ALWAYS joins conversations, even with no mailbox filter, so that the
+     * spam / deleted / imported exclusions apply to messages exactly as they
+     * do to conversations. Without the join, a spam conversation's messages
+     * would be counted while the conversation itself was excluded - so
+     * "inbound messages" would exceed what the rest of the page reports, for
+     * no visible reason.
+     */
+    protected function messagesOfType($type, DateRange $range = null)
+    {
         $range = $range ?: $this->range;
 
         $q = DB::table('threads')
+            ->join('conversations', 'conversations.id', '=', 'threads.conversation_id')
             ->whereBetween('threads.created_at', [$range->startSql(), $range->endSql()])
-            ->where('threads.type', \App\Thread::TYPE_MESSAGE)
+            ->where('threads.type', $type)
             ->where('threads.state', \App\Thread::STATE_PUBLISHED)
-            ->where('threads.imported', 0);
+            ->where('threads.imported', 0)
+            ->where('conversations.state', '!=', \App\Conversation::STATE_DELETED)
+            ->where('conversations.status', '!=', \App\Conversation::STATUS_SPAM)
+            ->where('conversations.imported', 0);
 
         if ($this->mailboxId) {
-            $q->join('conversations', 'conversations.id', '=', 'threads.conversation_id')
-              ->where('conversations.mailbox_id', $this->mailboxId);
+            $q->where('conversations.mailbox_id', $this->mailboxId);
         }
 
         return $q->count();

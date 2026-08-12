@@ -8,6 +8,7 @@ Custom [FreeScout](https://freescout.net/) modules built and maintained by
 | Module | Status | Description |
 |---|---|---|
 | `Triage` | In development | AI-assisted ticket routing and SLA escalation |
+| `Reports` | In development | Volume, triage effectiveness and resolution reporting |
 
 ### Triage
 
@@ -19,6 +20,21 @@ responded within a configured window.
 - **Escalation** is deterministic — plain SLA timers, no model involved
 - Every decision is recorded with its reasoning, so accuracy can be reviewed
   and the module can be switched to suggest-only or disabled entirely
+
+### Reports
+
+Read-only reporting on inbound volume, how much of it was triaged
+automatically, and how long issues take to answer and resolve.
+
+- **Derives timings from the `threads` table** rather than the conversation
+  convenience columns, which are unreliable for reporting
+- **Reports its own coverage** — resolution figures state how many
+  conversations they could actually time, rather than hiding the gap
+- **Elapsed and working-hours** durations side by side, reusing Triage's
+  business-time calendar so the two modules cannot disagree
+- Creates no tables and registers no hooks that act on tickets
+
+See [`Reports/README.md`](Reports/README.md) for the metric definitions.
 
 ## Installation
 
