@@ -1,0 +1,36 @@
+/* Triage module styles */
+
+.triage-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.triage-status .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.triage-status.ok      { background: #e8f5e9; color: #1b5e20; }
+.triage-status.ok .dot { background: #2e7d32; }
+.triage-status.warn      { background: #fff8e1; color: #7c4a03; }
+.triage-status.warn .dot { background: #ef6c00; }
+.triage-status.fail      { background: #ffebee; color: #8e1414; }
+.triage-status.fail .dot { background: #c62828; }
+
+.triage-profile-row td { vertical-align: middle; }
+.triage-profile-row textarea { min-height: 60px; font-size: 13px; }
+
+.triage-meta {
+    font-size: 12px;
+    color: #7f8c8d;
+}
+
+.triage-confidence {
+    font-family: monospace;
+    font-size: 12px;
+}
