@@ -9,6 +9,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Modules\DOTTriage\Entities\TriageProfile;
 use Modules\DOTTriage\Services\TriageEngine;
+use Modules\DOTTriage\Services\NoiseDetector;
+use Modules\DOTTriage\Entities\TriageDecision;
 
 /**
  * Triage one conversation.
@@ -65,11 +67,28 @@ class TriageConversation implements ShouldQueue
             return;
         }
 
+        // Non-support mail is identified from headers alone, before any API
+        // call - an auto-reply or newsletter should cost nothing to discard.
+        if ($this->handleNoise($conversation)) {
+            return;
+        }
+
         $decision = (new TriageEngine())->triage($conversation);
 
         if ($decision->error) {
             \Log::warning('[Triage] conversation '.$conversation->id.' failed: '.$decision->error);
             $this->addNote($conversation, 'Triage failed: '.$decision->error);
+            return;
+        }
+
+        // The model can also conclude this is not a support request, for mail
+        // the header rules could not settle (service notifications, marketing
+        // from senders that do not set Precedence).
+        if ($decision->noise_category === 'not_support') {
+            $decision->closed = true;
+            $decision->save();
+            $this->closeAsNoise($conversation, 'not_support', $decision->reasoning);
+            \Log::info('[Triage] closed conversation '.$conversation->id.' as not_support (model)');
             return;
         }
 
@@ -96,6 +115,66 @@ class TriageConversation implements ShouldQueue
         } else {
             $this->suggest($conversation, $profile, $decision, $confident, $threshold);
         }
+    }
+
+    /**
+     * Close the conversation if it is not a support request.
+     *
+     * @return bool true when handled and triage should stop
+     */
+    protected function handleNoise($conversation)
+    {
+        $thread = $conversation->threads()
+            ->where('type', \App\Thread::TYPE_CUSTOMER)
+            ->orderBy('created_at', 'asc')
+            ->first();
+
+        if (!$thread) {
+            return false;
+        }
+
+        $result = (new NoiseDetector())->classify($thread, $conversation->mailbox);
+
+        if (!$result['noise']) {
+            return false;
+        }
+
+        TriageDecision::create([
+            'conversation_id' => $conversation->id,
+            'mailbox_id'      => $conversation->mailbox_id,
+            'method'          => 'headers',
+            'noise_category'  => $result['category'],
+            'reasoning'       => $result['reason'],
+            'confidence'      => 1.0,
+            'applied'         => false,
+            'closed'          => true,
+        ]);
+
+        $this->closeAsNoise($conversation, $result['category'], $result['reason']);
+
+        \Log::info('[Triage] closed conversation '.$conversation->id
+            .' as '.$result['category']);
+
+        return true;
+    }
+
+    /**
+     * Close a conversation and explain why.
+     *
+     * Closed rather than deleted or marked spam: it stays searchable, a human
+     * can reopen it, and calling an out-of-office "spam" would be wrong.
+     */
+    protected function closeAsNoise($conversation, $category, $reason)
+    {
+        $this->addNote($conversation, sprintf(
+            'Closed automatically — %s. %s',
+            NoiseDetector::label($category),
+            $reason
+        ));
+
+        $conversation->status = \App\Conversation::STATUS_CLOSED;
+        $conversation->closed_at = now();
+        $conversation->save();
     }
 
     /**

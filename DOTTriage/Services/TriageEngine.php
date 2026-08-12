@@ -85,9 +85,10 @@ class TriageEngine
         $parsed = $this->parseResponse($result['text'], $profiles);
 
         return $this->record($conversation, [
-            'suggested_user_id' => $parsed['user_id'],
+            'suggested_user_id' => $parsed['not_support'] ? null : $parsed['user_id'],
             'confidence'        => $parsed['confidence'],
             'reasoning'         => $parsed['reasoning'],
+            'noise_category'    => $parsed['not_support'] ? 'not_support' : null,
             'method'            => 'model',
             'model'             => config('triage.model'),
             'tokens_in'         => $result['tokens_in'],
@@ -107,10 +108,13 @@ class TriageEngine
         return "You route incoming customer support emails to the most suitable agent.\n\n"
             ."Available agents:\n".implode("\n", $lines)."\n\n"
             ."Reply with ONLY a JSON object, no other text:\n"
-            .'{"user_id": <id or null>, "confidence": <0.0-1.0>, "reasoning": "<one short sentence>"}'."\n\n"
+            .'{"user_id": <id or null>, "confidence": <0.0-1.0>, "not_support": <true|false>, "reasoning": "<one short sentence>"}'."\n\n"
             ."Rules:\n"
             ."- Choose the agent whose described responsibilities best match the request.\n"
-            ."- Use null for user_id when no agent is a clear fit, or the request is spam/automated.\n"
+            ."- Set not_support to true when the message is not a customer support request at all:\n"
+            ."  marketing or newsletter mail, automated service notifications, delivery reports,\n"
+            ."  or anything sent by a system rather than a person seeking help.\n"
+            ."- Use null for user_id when no agent is a clear fit.\n"
             ."- confidence reflects how certain the match is. Below 0.5 means uncertain.\n"
             ."- Judge on the nature of the request, not on politeness or urgency of tone.\n"
             ."- Keep reasoning to one sentence a human can check at a glance.";
@@ -167,7 +171,8 @@ class TriageEngine
      */
     protected function parseResponse($text, $profiles)
     {
-        $default = ['user_id' => null, 'confidence' => 0.0, 'reasoning' => 'Could not parse model response.'];
+        $default = ['user_id' => null, 'confidence' => 0.0, 'not_support' => false,
+                    'reasoning' => 'Could not parse model response.'];
 
         if (preg_match('/\{.*\}/s', $text, $m)) {
             $json = json_decode($m[0], true);
@@ -186,16 +191,18 @@ class TriageEngine
         // Reject an id the model invented.
         if ($userId !== null && !$profiles->contains('user_id', $userId)) {
             return [
-                'user_id'    => null,
-                'confidence' => 0.0,
-                'reasoning'  => 'Model suggested an unknown user id ('.$userId.').',
+                'user_id'     => null,
+                'confidence'  => 0.0,
+                'not_support' => false,
+                'reasoning'   => 'Model suggested an unknown user id ('.$userId.').',
             ];
         }
 
         return [
-            'user_id'    => $userId,
-            'confidence' => isset($json['confidence']) ? (float) $json['confidence'] : 0.0,
-            'reasoning'  => isset($json['reasoning']) ? mb_substr((string) $json['reasoning'], 0, 500) : '',
+            'user_id'     => $userId,
+            'confidence'  => isset($json['confidence']) ? (float) $json['confidence'] : 0.0,
+            'not_support' => !empty($json['not_support']),
+            'reasoning'   => isset($json['reasoning']) ? mb_substr((string) $json['reasoning'], 0, 500) : '',
         ];
     }
 

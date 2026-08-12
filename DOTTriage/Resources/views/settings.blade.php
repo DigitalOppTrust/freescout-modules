@@ -131,6 +131,39 @@
         of {{ $users->count() }} agents available for routing.
     </p>
 
+    {{-- ── Non-support mail ──────────────────────────────────────── --}}
+    <div class="panel panel-default">
+        <div class="panel-heading"><strong>Non-support mail (30 days)</strong></div>
+        <div class="panel-body">
+            @if (count($noise))
+                <div class="triage-stats">
+                    @foreach ($noise as $cat => $n)
+                        <span>
+                            <span class="triage-meta">{{ \Modules\DOTTriage\Services\NoiseDetector::label($cat) }}</span>
+                            <strong>{{ $n }}</strong>
+                        </span>
+                    @endforeach
+                    <span>
+                        <span class="triage-meta">Reopened by a human</span>
+                        <strong class="{{ $noiseReopened ? 'text-danger' : '' }}">{{ $noiseReopened }}</strong>
+                    </span>
+                </div>
+                @if ($noiseReopened)
+                    <p class="triage-meta" style="margin-top:10px;">
+                        Reopened conversations mean a detection rule is closing genuine
+                        requests. Worth reviewing before it happens again.
+                    </p>
+                @endif
+            @else
+                <p class="triage-meta" style="margin:0;">
+                    Nothing closed as non-support yet. Auto-replies, newsletters, system
+                    notifications and delivery failures are closed automatically with a
+                    note explaining why — they stay searchable and can be reopened.
+                </p>
+            @endif
+        </div>
+    </div>
+
     {{-- ── Connection status ─────────────────────────────────────── --}}
     <div class="panel panel-default">
         <div class="panel-heading">

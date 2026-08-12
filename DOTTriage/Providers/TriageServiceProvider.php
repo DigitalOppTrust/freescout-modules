@@ -109,7 +109,22 @@ class TriageServiceProvider extends ServiceProvider
         }
 
         $conversation = $thread->conversation;
-        if (!$conversation || $conversation->user_id) {
+        if (!$conversation) {
+            return;
+        }
+
+        // An auto-reply arriving on an existing ticket must not reopen it or
+        // pull an assignee back in - a mail server saying "I'm on leave"
+        // should never reactivate a closed conversation. Note it and stop.
+        $noise = (new \Modules\DOTTriage\Services\NoiseDetector())
+            ->classify($thread, $conversation->mailbox);
+
+        if ($noise['noise'] && $this->isReplyToExisting($conversation, $thread)) {
+            $this->noteWithoutReopening($conversation, $noise);
+            return;
+        }
+
+        if ($conversation->user_id) {
             return;
         }
 
@@ -131,6 +146,54 @@ class TriageServiceProvider extends ServiceProvider
         }
 
         \Modules\DOTTriage\Jobs\TriageConversation::dispatch($conversation->id);
+    }
+
+    /** Is this thread a later message on a conversation that already existed? */
+    protected function isReplyToExisting($conversation, $thread)
+    {
+        return $conversation->threads()
+            ->where('id', '!=', $thread->id)
+            ->exists();
+    }
+
+    /**
+     * Note an auto-reply on a conversation without changing its status or
+     * assignment. Restores whatever FreeScout may already have changed.
+     */
+    protected function noteWithoutReopening($conversation, $noise)
+    {
+        $original = $conversation->getOriginal();
+
+        $body = '<strong>Triage</strong><br>'
+            .e(\Modules\DOTTriage\Services\NoiseDetector::label($noise['category'])
+               .' received. '.$noise['reason']
+               .' Ticket status and assignment left unchanged.');
+
+        try {
+            $note = new \App\Thread();
+            $note->conversation_id = $conversation->id;
+            $note->type    = \App\Thread::TYPE_NOTE;
+            $note->status  = \App\Thread::STATUS_NOCHANGE;
+            $note->state   = \App\Thread::STATE_PUBLISHED;
+            $note->body    = $body;
+            $note->source_via  = \App\Thread::PERSON_USER;
+            $note->source_type = \App\Thread::SOURCE_TYPE_WEB;
+            $note->customer_id = $conversation->customer_id;
+            $note->save();
+        } catch (\Throwable $e) {
+            \Log::warning('[Triage] could not note auto-reply on conversation '
+                .$conversation->id.': '.$e->getMessage());
+        }
+
+        // FreeScout reopens a closed conversation when a customer message
+        // arrives. Put the status back if it did.
+        if (isset($original['status']) && $conversation->status != $original['status']) {
+            $conversation->status = $original['status'];
+            $conversation->save();
+        }
+
+        \Log::info('[Triage] noted '.$noise['category'].' on existing conversation '
+            .$conversation->id.' without reopening');
     }
 
     /**

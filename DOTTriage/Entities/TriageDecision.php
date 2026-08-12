@@ -13,10 +13,12 @@ class TriageDecision extends Model
         'reasoning', 'method', 'model', 'tokens_in', 'tokens_out',
         'duration_ms', 'applied', 'overridden_by_user_id',
         'overridden_to_user_id', 'overridden_at', 'error',
+        'noise_category', 'closed', 'reopened_by_user_id', 'reopened_at',
     ];
 
     protected $casts = [
         'applied'    => 'boolean',
+        'closed'     => 'boolean',
         'confidence' => 'float',
     ];
 
@@ -30,6 +32,30 @@ class TriageDecision extends Model
     public function suggestedUser()
     {
         return $this->belongsTo(\App\User::class, 'suggested_user_id');
+    }
+
+    /** Conversations closed as non-support, grouped by category. */
+    public static function noiseCounts($days = 30)
+    {
+        $since = date('Y-m-d H:i:s', strtotime("-{$days} days"));
+
+        return self::where('closed', true)
+            ->where('created_at', '>=', $since)
+            ->selectRaw('noise_category, COUNT(*) AS total')
+            ->groupBy('noise_category')
+            ->pluck('total', 'noise_category')
+            ->all();
+    }
+
+    /** How many closures a human later reopened - the false-positive rate. */
+    public static function noiseReopened($days = 30)
+    {
+        $since = date('Y-m-d H:i:s', strtotime("-{$days} days"));
+
+        return self::where('closed', true)
+            ->where('created_at', '>=', $since)
+            ->whereNotNull('reopened_by_user_id')
+            ->count();
     }
 
     /** API calls made today, for the daily budget check. */

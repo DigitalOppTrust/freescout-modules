@@ -55,6 +55,8 @@ class TriageController extends Controller
             'accuracy'  => TriageDecision::accuracy(30),
             'callsToday'=> TriageDecision::callsToday(),
             'counts'    => TriageDecision::countsByUser(),
+            'noise'     => TriageDecision::noiseCounts(30),
+            'noiseReopened' => TriageDecision::noiseReopened(30),
         ]);
     }
 
