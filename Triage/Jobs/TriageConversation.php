@@ -35,7 +35,6 @@ class TriageConversation implements ShouldQueue
     public function __construct($conversationId)
     {
         $this->conversationId = (int) $conversationId;
-        $this->queue = 'emails';
     }
 
     public function handle()
