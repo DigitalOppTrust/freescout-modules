@@ -1,0 +1,62 @@
+# ═══════════════════════════════════════════════════════════
+# THIS REPOSITORY IS PUBLIC
+#
+# Anything committed here is world-readable and remains in git
+# history even after deletion. If a secret is ever committed,
+# treat it as compromised and rotate it immediately.
+# ═══════════════════════════════════════════════════════════
+
+# ── Secrets ────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+*_token*
+*apikey*
+*api_key*
+CLAUDE_API_KEY*
+ANTHROPIC_API_KEY*
+secrets*
+credentials*
+*.credentials
+auth.json
+
+# ── Operational documentation ──────────────────────────────
+# Internal runbooks describe live infrastructure (IP addresses,
+# instance IDs, paths, security posture). Useful to us, useful
+# to an attacker. Keep these out of the public repo.
+docs/
+*-runbook.md
+*-RUNBOOK.md
+UPGRADE-NOTES.md
+
+# ── Database and backups ───────────────────────────────────
+*.sql
+*.sql.gz
+*.dump
+*.tgz
+*.tar.gz
+backup*
+
+# ── Build / runtime artefacts ──────────────────────────────
+vendor/
+node_modules/
+*.log
+storage/
+bootstrap/cache/
+
+# ── OS / editor noise ──────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# Local infrastructure patterns for the pre-commit hook (never publish)
+.githooks/infra-patterns.local

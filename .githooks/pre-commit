@@ -1,0 +1,63 @@
+#!/bin/bash
+# Pre-commit guard for a PUBLIC repository.
+# Blocks commits containing secrets or infrastructure identifiers.
+# Bypass (only if you are certain): git commit --no-verify
+
+set -uo pipefail
+FAIL=0
+
+red()  { printf '\033[31m%s\033[0m\n' "$*"; }
+bold() { printf '\033[1m%s\033[0m\n' "$*"; }
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACM)
+[ -z "$STAGED" ] && exit 0
+
+# ── Secrets ────────────────────────────────────────────────
+PATTERNS='sk-ant-[A-Za-z0-9_-]{10}|BEGIN [A-Z ]*PRIVATE KEY|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{10}'
+HITS=$(git diff --cached -U0 | grep -inE "$PATTERNS" || true)
+if [ -n "$HITS" ]; then
+    red "BLOCKED: possible secret in staged changes"
+    echo "$HITS" | head -5 | sed 's/^/    /'
+    FAIL=1
+fi
+
+# ── Infrastructure identifiers ─────────────────────────────
+# Patterns live in a git-ignored local file so this hook can itself be
+# published without leaking the very values it guards against.
+# Create .githooks/infra-patterns.local with one regex per line.
+INFRA_FILE="$(git rev-parse --show-toplevel)/.githooks/infra-patterns.local"
+IHITS=""
+if [ -f "$INFRA_FILE" ]; then
+    # Scan the full staged file contents, not just the diff. A pattern can
+    # survive in a file while the diff hunk that added it looks innocuous
+    # (e.g. an escaped regex inside a documentation example).
+    for f in $STAGED; do
+        M=$(git show ":$f" 2>/dev/null | grep -inEf "$INFRA_FILE" | head -3 || true)
+        [ -n "$M" ] && IHITS="${IHITS}${f}: ${M}"$'\n'
+    done
+fi
+if [ -n "$IHITS" ]; then
+    red "BLOCKED: infrastructure identifier (origin IP / instance ID)"
+    echo "$IHITS" | head -5 | sed 's/^/    /'
+    echo "    Use generic wording, or move the file into docs/ (git-ignored)."
+    FAIL=1
+fi
+
+# ── Files that should never be staged ──────────────────────
+for f in $STAGED; do
+    case "$f" in
+        .env|.env.*|*.key|*.pem|*/UPGRADE-NOTES.md|docs/*|*.sql|*.sql.gz)
+            red "BLOCKED: $f must not be committed to a public repo"
+            FAIL=1
+            ;;
+    esac
+done
+
+if [ "$FAIL" -ne 0 ]; then
+    echo
+    bold "This repository is PUBLIC. Committed secrets stay in git history."
+    echo "Unstage the offending changes, or run: git commit --no-verify"
+    exit 1
+fi
+
+exit 0
