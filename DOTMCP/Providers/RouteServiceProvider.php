@@ -27,7 +27,11 @@ class RouteServiceProvider extends ServiceProvider
         // by a browser, so they carry no session cookie and no CSRF token -
         // 'web' middleware would reject them with a 419. They are protected by
         // PKCE and client credentials instead, which is what the spec expects.
-        Route::middleware('api')
+        //
+        // No middleware group: FreeScout has its 'api' group commented out in
+        // app/Http/Kernel.php, so ->middleware('api') resolves as a class name
+        // and throws. Throttling is applied explicitly instead.
+        Route::middleware(['throttle:120,1'])
             ->namespace('Modules\DOTMCP\Http\Controllers')
             ->prefix('mcp/oauth')
             ->group(__DIR__.'/../Routes/api.php');
