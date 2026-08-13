@@ -23,9 +23,13 @@ class RouteServiceProvider extends ServiceProvider
             ->group(__DIR__.'/../Routes/web.php');
 
         // RFC 8414 requires discovery at the domain root, not under a prefix.
+        // Fully qualified: ->namespace() on a single route does not resolve a
+        // bare controller name the way it does inside ->group().
         Route::middleware('web')
-            ->namespace('Modules\DOTMCP\Http\Controllers')
-            ->get('/.well-known/oauth-authorization-server', 'OAuthController@metadata')
+            ->get(
+                '/.well-known/oauth-authorization-server',
+                '\\Modules\\DOTMCP\\Http\\Controllers\\OAuthController@metadata'
+            )
             ->name('mcp.oauth.metadata');
     }
 
