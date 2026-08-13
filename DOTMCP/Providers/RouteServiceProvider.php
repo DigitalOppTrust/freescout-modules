@@ -16,11 +16,21 @@ class RouteServiceProvider extends ServiceProvider
 {
     public function boot()
     {
-        // Module routes, prefixed once here.
+        // Browser-facing routes: the consent screen and settings need the
+        // session and CSRF protection that 'web' provides.
         Route::middleware('web')
             ->namespace('Modules\DOTMCP\Http\Controllers')
             ->prefix('mcp')
             ->group(__DIR__.'/../Routes/web.php');
+
+        // Machine-to-machine OAuth endpoints. These are called by Claude, not
+        // by a browser, so they carry no session cookie and no CSRF token -
+        // 'web' middleware would reject them with a 419. They are protected by
+        // PKCE and client credentials instead, which is what the spec expects.
+        Route::middleware('api')
+            ->namespace('Modules\DOTMCP\Http\Controllers')
+            ->prefix('mcp/oauth')
+            ->group(__DIR__.'/../Routes/api.php');
 
         // RFC 8414 requires discovery at the domain root, not under a prefix.
         // Fully qualified: ->namespace() on a single route does not resolve a
