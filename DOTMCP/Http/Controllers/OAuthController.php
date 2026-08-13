@@ -36,6 +36,22 @@ class OAuthController extends Controller
     }
 
     /**
+     * RFC 9728 protected resource metadata. Points a client at the
+     * authorisation server that guards the MCP endpoint.
+     */
+    public function protectedResource()
+    {
+        $base = url('/');
+
+        return response()->json([
+            'resource'              => $base.'/mcp',
+            'authorization_servers' => [$base],
+            'scopes_supported'      => ['mcp:read'],
+            'bearer_methods_supported' => ['header'],
+        ]);
+    }
+
+    /**
      * RFC 7591 dynamic client registration.
      *
      * Open registration is intentional: it registers a client, not a user, and

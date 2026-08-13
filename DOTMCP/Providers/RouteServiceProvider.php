@@ -36,6 +36,19 @@ class RouteServiceProvider extends ServiceProvider
             ->prefix('mcp/oauth')
             ->group(__DIR__.'/../Routes/api.php');
 
+        // The MCP endpoint itself, at /mcp exactly. Bearer-authenticated in
+        // the controller, so no session middleware: Claude posts here with an
+        // Authorization header and no cookie.
+        Route::middleware(['throttle:120,1'])
+            ->post('/mcp', '\\Modules\\DOTMCP\\Http\\Controllers\\McpController@handle')
+            ->name('mcp.handle');
+
+        // RFC 9728 protected-resource metadata: tells a client which
+        // authorisation server guards this endpoint.
+        Route::get('/.well-known/oauth-protected-resource',
+            '\\Modules\\DOTMCP\\Http\\Controllers\\OAuthController@protectedResource')
+            ->name('mcp.oauth.resource');
+
         // RFC 8414 requires discovery at the domain root, not under a prefix.
         // Fully qualified: ->namespace() on a single route does not resolve a
         // bare controller name the way it does inside ->group().
