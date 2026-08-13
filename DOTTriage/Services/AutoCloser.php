@@ -3,6 +3,7 @@
 namespace Modules\DOTTriage\Services;
 
 use Modules\DOTTriage\Entities\TriageDecision;
+use Modules\DOTTriage\Services\Settings;
 
 /**
  * Closes conversations that no longer need a human.
@@ -41,8 +42,13 @@ class AutoCloser
      * Pass 1: apply the noise detector to conversations that were never
      * triaged - typically because they predate the module being enabled.
      */
-    public function sweepBacklogNoise($limit = 100)
+    public function sweepBacklogNoise($limit = null)
     {
+        if (!Settings::get('close_noise_enabled')) {
+            return [];
+        }
+
+        $limit    = $this->cap($limit);
         $detector = new NoiseDetector();
         $results  = [];
 
@@ -57,6 +63,10 @@ class AutoCloser
             ->get();
 
         foreach ($conversations as $c) {
+            if ($this->isProtected($c)) {
+                continue;
+            }
+
             $thread = $c->threads()
                 ->where('type', \App\Thread::TYPE_CUSTOMER)
                 ->orderBy('created_at', 'asc')
@@ -92,9 +102,14 @@ class AutoCloser
      * Working time, not wall clock - a ticket answered on Friday has not been
      * ignored by Monday morning.
      */
-    public function sweepInactive($limit = 100)
+    public function sweepInactive($limit = null)
     {
-        $minutes = (int) config('triage.close_after_inactive_minutes', 7200); // 5 working days
+        if (!Settings::get('close_inactive_enabled')) {
+            return [];
+        }
+
+        $limit   = $this->cap($limit);
+        $minutes = (int) Settings::get('close_after_inactive_minutes');
         $results = [];
 
         $conversations = \App\Conversation::where('status', \App\Conversation::STATUS_ACTIVE)
@@ -107,13 +122,18 @@ class AutoCloser
                 break;
             }
 
+            if ($this->isProtected($c)) {
+                continue;
+            }
+
             $lastAgent = $c->threads()
                 ->where('type', \App\Thread::TYPE_MESSAGE)
                 ->orderBy('created_at', 'desc')
                 ->first();
 
             // No agent has replied - this is not "waiting on the customer",
-            // it is unanswered. Escalation handles that, not closing.
+            // it is unanswered. Closing it would hide a failure rather than
+            // tidy the queue, so escalation handles these instead.
             if (!$lastAgent) {
                 continue;
             }
@@ -169,14 +189,15 @@ class AutoCloser
      * ambiguous is left open, because the cost of a wrong close is much
      * higher than the cost of a stale ticket.
      */
-    public function sweepResolved($limit = 25)
+    public function sweepResolved($limit = null)
     {
-        if (!config('triage.close_resolved_enabled', false)) {
-            return ['skipped' => 'Resolution closing is disabled (TRIAGE_CLOSE_RESOLVED).'];
+        if (!Settings::get('close_resolved_enabled')) {
+            return ['skipped' => 'Closing resolved tickets is switched off in Manage → Triage.'];
         }
 
-        $minQuiet   = (int) config('triage.resolved_min_quiet_minutes', 1440); // 1 working day
-        $threshold  = (float) config('triage.resolved_confidence', 0.85);
+        $limit      = min($this->cap($limit), 25);
+        $minQuiet   = (int) Settings::get('resolved_min_quiet_minutes');
+        $threshold  = (float) Settings::get('resolved_confidence');
         $client     = new ClaudeClient();
         $results    = [];
 
@@ -192,6 +213,10 @@ class AutoCloser
         foreach ($conversations as $c) {
             if (count($results) >= $limit) {
                 break;
+            }
+
+            if ($this->isProtected($c)) {
+                continue;
             }
 
             $lastAgent = $c->threads()
@@ -246,6 +271,23 @@ class AutoCloser
         }
 
         return $results;
+    }
+
+    /** Bound a run to the configured maximum. */
+    protected function cap($requested)
+    {
+        $max = (int) Settings::get('close_max_per_run');
+
+        return $requested === null ? $max : min((int) $requested, $max);
+    }
+
+    /**
+     * Should this conversation be left alone regardless of the rules?
+     * With 'protect assigned' on, a ticket someone owns is theirs to close.
+     */
+    protected function isProtected($conversation)
+    {
+        return Settings::get('close_protect_assigned') && $conversation->user_id;
     }
 
     /** Ask the model whether the exchange is finished. */

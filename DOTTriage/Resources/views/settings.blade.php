@@ -131,6 +131,85 @@
         of {{ $users->count() }} agents available for routing.
     </p>
 
+    {{-- ── Automatic closing ─────────────────────────────────────── --}}
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <strong>Automatic closing</strong>
+            <a href="{{ route('triage.closing.preview') }}"
+               class="btn btn-default btn-xs pull-right">Preview what would close</a>
+        </div>
+        <div class="panel-body">
+            <p class="triage-meta" style="margin-bottom:16px;">
+                Closed tickets keep their history and stay searchable. The customer is
+                never emailed — and if a ticket was closed wrongly, their next reply
+                reopens it automatically.
+            </p>
+
+            <form method="POST" action="{{ route('triage.closing.save') }}" class="form-horizontal">
+                {{ csrf_field() }}
+
+                @foreach ($closing as $key => $s)
+                    <div class="form-group">
+                        @if ($s['type'] === 'bool')
+                            <div class="col-sm-9 col-sm-offset-3">
+                                <label style="font-weight:normal;">
+                                    <input type="checkbox" name="{{ $key }}" value="1"
+                                        {{ $s['value'] ? 'checked' : '' }}>
+                                    <strong>{{ $s['label'] }}</strong>
+                                </label>
+                                <p class="help-block" style="margin-top:2px;">{{ $s['help'] }}</p>
+                            </div>
+                        @else
+                            <label class="col-sm-3 control-label">{{ $s['label'] }}</label>
+                            <div class="col-sm-4">
+                                <select name="{{ $key }}" class="form-control">
+                                    @foreach ($s['choices'] as $val => $label)
+                                        <option value="{{ $val }}"
+                                            {{ (string) $s['value'] === (string) $val ? 'selected' : '' }}>
+                                            {{ $label }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <p class="help-block">{{ $s['help'] }}</p>
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+
+                <div class="form-group">
+                    <div class="col-sm-9 col-sm-offset-3">
+                        <button type="submit" class="btn btn-primary">Save closing settings</button>
+                    </div>
+                </div>
+            </form>
+
+            @if (count($closeStats))
+                <hr>
+                <div class="triage-stats">
+                    @foreach ($closeStats as $reason => $n)
+                        <span>
+                            <span class="triage-meta">
+                                {{ ['backlog_noise' => 'Not a support request',
+                                    'inactivity'    => 'Customer stopped replying',
+                                    'resolved'      => 'Looked resolved',
+                                    'unrecorded'    => 'Closed (reason not recorded)'][$reason] ?? $reason }}
+                            </span>
+                            <strong>{{ $n }}</strong>
+                        </span>
+                    @endforeach
+                    <span>
+                        <span class="triage-meta">Reopened by a human</span>
+                        <strong class="{{ $noiseReopened ? 'text-danger' : '' }}">{{ $noiseReopened }}</strong>
+                    </span>
+                </div>
+                <p class="triage-meta" style="margin-top:10px;">
+                    Last 30 days. Reopened tickets are the signal that a rule is closing
+                    things it should not.
+                </p>
+            @endif
+        </div>
+    </div>
+
     {{-- ── Non-support mail ──────────────────────────────────────── --}}
     <div class="panel panel-default">
         <div class="panel-heading"><strong>Non-support mail (30 days)</strong></div>

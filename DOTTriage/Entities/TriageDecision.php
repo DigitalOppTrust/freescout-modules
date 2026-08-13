@@ -47,6 +47,19 @@ class TriageDecision extends Model
             ->all();
     }
 
+    /** Closures grouped by reason, for the settings panel. */
+    public static function closeCounts($days = 30)
+    {
+        $since = date('Y-m-d H:i:s', strtotime("-{$days} days"));
+
+        return self::where('closed', true)
+            ->where('created_at', '>=', $since)
+            ->selectRaw("IFNULL(close_reason, 'unrecorded') AS reason, COUNT(*) AS total")
+            ->groupBy('reason')
+            ->pluck('total', 'reason')
+            ->all();
+    }
+
     /** How many closures a human later reopened - the false-positive rate. */
     public static function noiseReopened($days = 30)
     {

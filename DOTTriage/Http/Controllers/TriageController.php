@@ -7,6 +7,8 @@ use Illuminate\Routing\Controller;
 use Modules\DOTTriage\Entities\TriageProfile;
 use Modules\DOTTriage\Entities\TriageDecision;
 use Modules\DOTTriage\Services\ClaudeClient;
+use Modules\DOTTriage\Services\Settings;
+use Modules\DOTTriage\Services\AutoCloser;
 
 class TriageController extends Controller
 {
@@ -57,6 +59,8 @@ class TriageController extends Controller
             'counts'    => TriageDecision::countsByUser(),
             'noise'     => TriageDecision::noiseCounts(30),
             'noiseReopened' => TriageDecision::noiseReopened(30),
+            'closing'   => Settings::group('closing'),
+            'closeStats'=> TriageDecision::closeCounts(30),
         ]);
     }
 
@@ -117,6 +121,38 @@ class TriageController extends Controller
             'rotationGroups' => $rotationGroups,
             'groupPeers'     => $groupPeers,
             'openCount'      => $openCount,
+        ]);
+    }
+
+    /** Save the automatic-closing settings. */
+    public function saveClosing(Request $request)
+    {
+        foreach (Settings::schema() as $key => $spec) {
+            if ($spec['group'] !== 'closing') {
+                continue;
+            }
+
+            if ($spec['type'] === 'bool') {
+                // An unchecked box submits nothing, so absence means false.
+                Settings::set($key, $request->input($key) ? '1' : '0');
+            } elseif ($request->has($key)) {
+                Settings::set($key, $request->input($key));
+            }
+        }
+
+        return redirect()->route('triage.settings')
+            ->with('success', 'Closing settings saved.');
+    }
+
+    /** Show what a sweep would close, without closing anything. */
+    public function previewClosing()
+    {
+        $closer = new AutoCloser(true);
+
+        return view('triage::closing_preview', [
+            'noise'    => $closer->sweepBacklogNoise(),
+            'inactive' => $closer->sweepInactive(),
+            'resolved' => $closer->sweepResolved(),
         ]);
     }
 
