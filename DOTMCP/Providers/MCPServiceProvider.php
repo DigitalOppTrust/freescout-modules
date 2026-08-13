@@ -54,11 +54,17 @@ class MCPServiceProvider extends ServiceProvider
             return;
         }
 
-        // The menu entry appears only for users who are MCP-enabled. Someone
-        // without access sees no trace of the module.
+        // Admins see the entry because this is where MCP access is granted -
+        // without that, nobody could ever enable the first user. MCP-enabled
+        // users see it to manage their own connections. Everyone else sees no
+        // trace of the module, and the controller returns 404 to match.
         \Eventy::addAction('menu.manage.append', function () {
             $user = auth()->user();
-            if ($user && AccessLevel::checkUser($user)['allowed']) {
+            if (!$user) {
+                return;
+            }
+
+            if ($user->isAdmin() || AccessLevel::checkUser($user)['allowed']) {
                 echo '<li><a href="'.route('mcp.settings').'">'
                     .'<i class="glyphicon glyphicon-transfer"></i> MCP</a></li>';
             }
