@@ -1,0 +1,281 @@
+/*
+ * DO Trust theme for FreeScout
+ *
+ * Loaded through the layout.head hook, after FreeScout's own stylesheets, so
+ * these rules win without needing !important on everything. Where !important
+ * does appear it is because FreeScout sets the property inline or in a rule
+ * with higher specificity that cannot be matched from here.
+ *
+ * Deliberately conservative: this restyles colour, typography and spacing. It
+ * does not move anything or change how the interface behaves, because an
+ * agent who knows FreeScout should still recognise it.
+ */
+
+/* ── Montserrat, self-hosted ─────────────────────────────────
+   Served from the module rather than Google Fonts: a support desk should not
+   make a third-party request on every page load, and it removes an external
+   round trip on the customer-facing side.                                  */
+
+@font-face {
+    font-family: 'Montserrat';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/montserrat-400.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Montserrat';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('../fonts/montserrat-500.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Montserrat';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('../fonts/montserrat-600.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Montserrat';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('../fonts/montserrat-700.woff2') format('woff2');
+}
+
+:root {
+    --dot-brand:       #0079B2;
+    --dot-brand-dark:  #005F8C;
+    --dot-brand-light: #E6F2F8;
+    --dot-ink:         #21323D;
+    --dot-muted:       #6B7C87;
+    --dot-line:        #DFE6EB;
+}
+
+/* ── Typography ──────────────────────────────────────────────
+   font-family only. Sizes are left alone: FreeScout's layout is tuned to its
+   own metrics, and Montserrat runs slightly wider than the default stack, so
+   resizing here would push table columns around.                           */
+
+body,
+.btn,
+input, select, textarea,
+.form-control,
+.navbar,
+.dropdown-menu,
+.panel-heading,
+.modal-title,
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                 Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6,
+.subheader {
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--dot-ink);
+}
+
+body {
+    font-weight: 400;
+    color: var(--dot-ink);
+}
+
+/* Montserrat's bold is heavier than the default - 600 reads better than 700
+   for UI text at these sizes. */
+strong, b, .strong {
+    font-weight: 600;
+}
+
+/* ── Top navigation ──────────────────────────────────────────  */
+
+.navbar-default {
+    background: #FFFFFF;
+    border-bottom: 1px solid var(--dot-line);
+    box-shadow: 0 1px 3px rgba(33, 50, 61, .06);
+}
+
+.navbar-default .navbar-nav > li > a {
+    color: var(--dot-ink);
+    font-weight: 500;
+}
+
+.navbar-default .navbar-nav > li > a:hover,
+.navbar-default .navbar-nav > li > a:focus {
+    color: var(--dot-brand);
+}
+
+.navbar-default .navbar-nav > .active > a,
+.navbar-default .navbar-nav > .active > a:hover,
+.navbar-default .navbar-nav > .active > a:focus,
+.navbar-default .navbar-nav > .open > a,
+.navbar-default .navbar-nav > .open > a:hover {
+    background: var(--dot-brand-light);
+    color: var(--dot-brand-dark);
+}
+
+/* The logo is an SVG swapped in via the layout.header_logo filter. Give it
+   room to breathe without changing the navbar height. */
+.navbar-brand img {
+    max-height: 30px;
+    width: auto;
+    margin-top: 2px;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────  */
+
+.btn-primary {
+    background: var(--dot-brand);
+    border-color: var(--dot-brand);
+    font-weight: 500;
+}
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary.active,
+.open > .dropdown-toggle.btn-primary {
+    background: var(--dot-brand-dark);
+    border-color: var(--dot-brand-dark);
+}
+
+.btn-default {
+    border-color: var(--dot-line);
+    font-weight: 500;
+}
+.btn-default:hover,
+.btn-default:focus {
+    border-color: var(--dot-brand);
+    color: var(--dot-brand);
+}
+
+.btn-link {
+    color: var(--dot-brand);
+    font-weight: 500;
+}
+.btn-link:hover {
+    color: var(--dot-brand-dark);
+}
+
+/* ── Links ───────────────────────────────────────────────────  */
+
+a {
+    color: var(--dot-brand);
+}
+a:hover,
+a:focus {
+    color: var(--dot-brand-dark);
+}
+
+/* ── Panels and tables ───────────────────────────────────────  */
+
+.panel {
+    border-color: var(--dot-line);
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(33, 50, 61, .04);
+}
+
+.panel-default > .panel-heading {
+    background: #FBFCFD;
+    border-bottom-color: var(--dot-line);
+    font-weight: 600;
+    color: var(--dot-ink);
+}
+
+.table > thead > tr > th {
+    border-bottom: 2px solid var(--dot-line);
+    font-weight: 600;
+    color: var(--dot-muted);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: .04em;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) {
+    background: #FBFCFD;
+}
+
+/* ── Forms ───────────────────────────────────────────────────  */
+
+.form-control {
+    border-color: var(--dot-line);
+    border-radius: 3px;
+    box-shadow: none;
+}
+.form-control:focus {
+    border-color: var(--dot-brand);
+    box-shadow: 0 0 0 2px rgba(0, 121, 178, .12);
+}
+
+.help-block {
+    color: var(--dot-muted);
+    font-size: 12px;
+}
+
+/* ── Conversation list ───────────────────────────────────────
+   The unread marker is the main way an agent scans this list, so it uses the
+   brand colour rather than the default.                                     */
+
+.conv-row.unread .conv-subject,
+tr.unread .conv-subject {
+    font-weight: 600;
+    color: var(--dot-ink);
+}
+
+.conv-row:hover,
+.table-conversations tbody tr:hover {
+    background: var(--dot-brand-light) !important;
+}
+
+/* ── Sidebar / folders ───────────────────────────────────────  */
+
+.sidebar-menu > li.active > a,
+.sidebar-menu > li > a:hover {
+    background: var(--dot-brand-light);
+    color: var(--dot-brand-dark);
+    border-left: 3px solid var(--dot-brand);
+}
+
+/* ── Labels and badges ───────────────────────────────────────  */
+
+.label-primary,
+.badge {
+    background: var(--dot-brand);
+    font-weight: 500;
+}
+
+/* ── Login page ──────────────────────────────────────────────
+   Customers and agents both see this, so it carries the branding most
+   visibly.                                                                  */
+
+body.login-body,
+body.body-login {
+    background: linear-gradient(160deg, #F4F8FB 0%, #E9F1F6 100%);
+}
+
+.login-form,
+.form-signin {
+    border: 1px solid var(--dot-line);
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(33, 50, 61, .08);
+    background: #fff;
+}
+
+/* ── Alerts ──────────────────────────────────────────────────  */
+
+.alert-info {
+    background: var(--dot-brand-light);
+    border-color: #BEDDEC;
+    color: var(--dot-brand-dark);
+}
+
+/* ── Print ───────────────────────────────────────────────────
+   Tickets get printed and attached to case notes; no point wasting ink on
+   the branding.                                                             */
+
+@media print {
+    .navbar, .sidebar-menu, .btn { display: none !important; }
+    body { color: #000; }
+}

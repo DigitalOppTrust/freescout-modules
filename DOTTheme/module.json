@@ -1,0 +1,19 @@
+{
+    "name": "DOTTheme",
+    "alias": "dottheme",
+    "description": "DO Trust branding: logo, colours and Montserrat typography",
+    "version": "0.1.0",
+    "detailsUrl": "",
+    "author": "DO Trust",
+    "requiredAppVersion": "1.8.0",
+    "license": "MIT",
+    "keywords": [],
+    "active": 1,
+    "order": 0,
+    "providers": [
+        "Modules\\DOTTheme\\Providers\\ThemeServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}
