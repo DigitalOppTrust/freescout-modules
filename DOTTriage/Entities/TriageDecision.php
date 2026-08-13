@@ -13,7 +13,7 @@ class TriageDecision extends Model
         'reasoning', 'method', 'model', 'tokens_in', 'tokens_out',
         'duration_ms', 'applied', 'overridden_by_user_id',
         'overridden_to_user_id', 'overridden_at', 'error',
-        'noise_category', 'closed', 'reopened_by_user_id', 'reopened_at',
+        'noise_category', 'closed', 'close_reason', 'reopened_by_user_id', 'reopened_at',
     ];
 
     protected $casts = [
