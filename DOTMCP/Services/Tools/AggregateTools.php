@@ -25,8 +25,8 @@ class AggregateTools
     public function conversationVolume(array $args)
     {
         list($since, $days) = $this->since($args['days'] ?? 30);
-        $groupBy = in_array($args['group_by'] ?? 'day', ['day', 'week', 'month'], true)
-            ? $args['group_by'] : 'day';
+        $requested = $args['group_by'] ?? 'day';
+        $groupBy = in_array($requested, ['day', 'week', 'month'], true) ? $requested : 'day';
 
         $format = ['day' => '%Y-%m-%d', 'week' => '%x-W%v', 'month' => '%Y-%m'][$groupBy];
 
