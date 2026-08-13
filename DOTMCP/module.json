@@ -1,0 +1,19 @@
+{
+    "name": "DOTMCP",
+    "alias": "dotmcp",
+    "description": "MCP server with per-user OAuth and role-based access",
+    "version": "0.1.0",
+    "detailsUrl": "",
+    "author": "DO Trust",
+    "requiredAppVersion": "1.8.0",
+    "license": "MIT",
+    "keywords": [],
+    "active": 1,
+    "order": 0,
+    "providers": [
+        "Modules\\DOTMCP\\Providers\\MCPServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

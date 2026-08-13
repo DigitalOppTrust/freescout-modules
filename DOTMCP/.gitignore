@@ -1,0 +1,5 @@
+# The OAuth signing keypair is generated per install and must never be
+# committed. Keys live outside the module anyway; this is belt and braces.
+*.key
+private.key
+public.key

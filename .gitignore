@@ -60,3 +60,9 @@ Thumbs.db
 
 # Local infrastructure patterns for the pre-commit hook (never publish)
 .githooks/infra-patterns.local
+
+# DOTMCP ships its own vendor/ deliberately: FreeScout commits its own
+# vendor/ and adding packages there conflicts on every upgrade. The server
+# cannot run composer per-module, so these must be in the repo.
+!DOTMCP/vendor/
+!DOTMCP/vendor/**
