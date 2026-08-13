@@ -10,10 +10,10 @@ namespace Modules\DOTMCP\Services;
  *   2. the user's access level
  *   3. the tool's required level
  *
- * Effective access is the LOWER of the user's level and the tool's
- * requirement, so a high-access user calling an aggregate tool still gets
- * aggregate output, and a low-access user calling a detail tool is refused
- * with a reason rather than silently receiving an empty result.
+ * The tool's level is the MINIMUM needed to call it, not a cap on what is
+ * returned. A low-access user calling a detail tool is refused with a reason;
+ * a high-access user calling that same tool sees the detail their level
+ * entitles them to.
  *
  * Kept in one class deliberately: a new tool must not be able to widen access
  * by forgetting to check something.
@@ -93,6 +93,15 @@ class AccessLevel
     /**
      * Gates 2 and 3 together.
      *
+     * The tool's level is the MINIMUM required to call it - it is not a cap on
+     * what the caller sees. A detail tool requires `medium` to be callable at
+     * all, but a `high` user calling it should still see customer details;
+     * capping the effective level at the tool's minimum would silently strip
+     * PII from a user entitled to it.
+     *
+     * So the effective level is the USER's level once the gate passes. The
+     * tool's level governs access, not verbosity.
+     *
      * @return array{allowed: bool, effective: ?string, reason: ?string}
      */
     public static function checkTool($user, $requiredLevel)
@@ -118,7 +127,7 @@ class AccessLevel
 
         return [
             'allowed'   => true,
-            'effective' => self::effective($userLevel, $requiredLevel),
+            'effective' => $userLevel,
             'reason'    => null,
         ];
     }
