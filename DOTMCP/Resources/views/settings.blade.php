@@ -1,5 +1,9 @@
 @extends('layouts.app')
 @section('title', 'MCP')
+
+@section('stylesheets')
+    <link rel="stylesheet" href="{{ asset('modules/dotmcp/css/module.css') }}">
+@endsection
 @section('content')
 <div class="container">
     <h2 class="subheader">MCP</h2>
@@ -23,8 +27,8 @@
         <div class="panel-heading"><strong>Connection</strong></div>
         <div class="panel-body">
             <p>Add this as a custom connector in Claude:</p>
-            <p><code>{{ $endpoint }}</code></p>
-            <p class="text-muted" style="font-size:12px; margin-bottom:0;">
+            <code class="mcp-endpoint">{{ $endpoint }}</code>
+            <p class="mcp-meta" style="margin:10px 0 0 0;">
                 Claude will send you here to sign in and approve. Access is read-only —
                 it cannot reply to customers or change anything.
             </p>
@@ -54,7 +58,13 @@
             <tr>
                 <td>
                     <strong>{{ $u->getFullName() }}</strong><br>
-                    <span class="text-muted" style="font-size:12px;">{{ $u->email }}</span>
+                    <span class="mcp-meta">{{ $u->email }}</span><br>
+                    <span class="mcp-state {{ $u->mcp_enabled ? 'on' : 'off' }}">
+                        <span class="dot"></span>{{ $u->mcp_enabled ? 'Enabled' : 'No access' }}
+                    </span>
+                    @if ($u->mcp_enabled)
+                        <span class="mcp-level {{ $u->mcp_access_level ?: 'low' }}">{{ $u->mcp_access_level ?: 'low' }}</span>
+                    @endif
                 </td>
                 <form method="POST" action="{{ route('mcp.settings.user') }}">
                     {{ csrf_field() }}
@@ -93,9 +103,9 @@
             @foreach ($tokens as $t)
                 <tr>
                     <td>{{ $t->user ? $t->user->getFullName() : 'user '.$t->user_id }}</td>
-                    <td>{{ $t->access_level }}</td>
+                    <td><span class="mcp-level {{ $t->access_level }}">{{ $t->access_level }}</span></td>
                     <td>
-                        {{ $t->last_used_at ? $t->last_used_at->diffForHumans() : 'never' }}
+                        {!! $t->last_used_at ? $t->last_used_at->diffForHumans() : '<span class="mcp-never">never</span>' !!}
                     </td>
                     <td>{{ $t->use_count }}</td>
                     <td>

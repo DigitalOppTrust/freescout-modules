@@ -1,5 +1,9 @@
 @extends('layouts.app')
 @section('title', 'Authorise MCP access')
+
+@section('stylesheets')
+    <link rel="stylesheet" href="{{ asset('modules/dotmcp/css/module.css') }}">
+@endsection
 @section('content')
 <div class="container">
     <div class="row">
@@ -17,7 +21,7 @@
 
                     <div class="alert alert-info" style="margin-top:15px;">
                         <strong>What it will be able to do</strong>
-                        <ul style="margin:8px 0 0 0; padding-left:18px;">
+                        <ul class="mcp-consent-scope">
                             <li>Read support statistics and reports</li>
                             @if ($accessLevel === 'high')
                                 <li>Read conversations <strong>including customer details</strong></li>
@@ -33,8 +37,8 @@
                         </p>
                     </div>
 
-                    <p class="text-muted" style="font-size:12px;">
-                        Your access level is <strong>{{ $accessLevel }}</strong>. You can
+                    <p class="mcp-meta">
+                        Your access level is <span class="mcp-level {{ $accessLevel }}">{{ $accessLevel }}</span>. You can
                         revoke this at any time from Manage → MCP.
                     </p>
 

@@ -1,0 +1,64 @@
+/* DOTMCP module styles */
+
+/* ── Access level badges ────────────────────────────────── */
+.mcp-level {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+}
+.mcp-level.low    { background: #eceff1; color: #546e7a; }
+.mcp-level.medium { background: #fff8e1; color: #7c4a03; }
+.mcp-level.high   { background: #e8f5e9; color: #1b5e20; }
+
+/* ── Enabled / disabled state ───────────────────────────── */
+.mcp-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.mcp-state .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.mcp-state.on      { color: #1b5e20; }
+.mcp-state.on .dot { background: #2e7d32; }
+.mcp-state.off      { color: #7f8c8d; }
+.mcp-state.off .dot { background: #b0b7bd; }
+
+/* ── Connection endpoint ────────────────────────────────── */
+.mcp-endpoint {
+    display: block;
+    padding: 10px 12px;
+    background: #f5f7f9;
+    border: 1px solid #e0e4e8;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 13px;
+    word-break: break-all;
+}
+
+.mcp-meta {
+    font-size: 12px;
+    color: #7f8c8d;
+}
+
+/* ── Consent screen ─────────────────────────────────────── */
+.mcp-consent-scope {
+    margin: 8px 0 0 0;
+    padding-left: 18px;
+}
+.mcp-consent-scope li {
+    margin-bottom: 4px;
+}
+
+/* ── Token table ────────────────────────────────────────── */
+.mcp-tokens td { vertical-align: middle; font-size: 13px; }
+.mcp-tokens .mcp-never { color: #b0b7bd; font-style: italic; }
