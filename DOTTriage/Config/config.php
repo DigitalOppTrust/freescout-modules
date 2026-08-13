@@ -48,4 +48,21 @@ return [
 
     // API request timeout in seconds.
     'timeout' => env('TRIAGE_TIMEOUT', 30),
+
+    // ── Automatic closing ────────────────────────────────────────────
+    // Working minutes of customer silence after an agent reply before a
+    // conversation is closed as inactive. 7200 = 5 working days.
+    'close_after_inactive_minutes' => env('TRIAGE_CLOSE_INACTIVE_AFTER', 7200),
+
+    // Ask the model whether a conversation is finished. Off by default:
+    // closing an unresolved issue makes a customer think they were ignored,
+    // and nobody notices because the ticket has left the queue.
+    'close_resolved_enabled' => env('TRIAGE_CLOSE_RESOLVED', false),
+
+    // A conversation must be quiet this long before the model is even asked,
+    // so an active exchange is never judged mid-flight. 1440 = 1 working day.
+    'resolved_min_quiet_minutes' => env('TRIAGE_RESOLVED_QUIET', 1440),
+
+    // The model must be at least this confident before a close happens.
+    'resolved_confidence' => env('TRIAGE_RESOLVED_CONFIDENCE', 0.85),
 ];

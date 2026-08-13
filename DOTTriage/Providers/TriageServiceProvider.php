@@ -30,7 +30,10 @@ class TriageServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->register(RouteServiceProvider::class);
-        $this->commands([\Modules\DOTTriage\Console\TriageRun::class]);
+        $this->commands([
+            \Modules\DOTTriage\Console\TriageRun::class,
+            \Modules\DOTTriage\Console\TriageSweep::class,
+        ]);
     }
 
     protected function registerConfig()
