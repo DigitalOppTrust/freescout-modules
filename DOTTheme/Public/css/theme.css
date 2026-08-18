@@ -2,9 +2,13 @@
  * DO Trust theme for FreeScout
  *
  * Loaded through the layout.head hook, after FreeScout's own stylesheets, so
- * these rules win without needing !important on everything. Where !important
- * does appear it is because FreeScout sets the property inline or in a rule
- * with higher specificity that cannot be matched from here.
+ * most rules win on source order alone.
+ *
+ * The navbar block is the exception. FreeScout sets background-color as a
+ * LONGHAND, and a shorthand `background` declaration does not override a
+ * longhand at equal specificity - so those rules use the longhand plus
+ * !important. Every !important in this file is there for that reason, not as
+ * a shortcut.
  *
  * Deliberately conservative: this restyles colour, typography and spacing. It
  * does not move anything or change how the interface behaves, because an
@@ -92,29 +96,65 @@ strong, b, .strong {
 
 /* ── Top navigation ──────────────────────────────────────────  */
 
-.navbar-default {
-    background: #FFFFFF;
+/* FreeScout paints this with the background-color LONGHAND
+   (.navbar-default{background-color:#0078d7}). The shorthand `background`
+   does not beat a longhand at equal specificity and later source order, so
+   the longhand is what must be overridden here.
+
+   The DOT logo is #0079B2 and FreeScout's navbar is #0078d7 - near enough
+   the same blue that the logo scored 1.07:1 against it and effectively
+   disappeared. White gives 4.80:1, which passes WCAG AA. */
+.navbar-default,
+.navbar.navbar-default {
+    background-color: #FFFFFF !important;
+    background-image: none !important;
     border-bottom: 1px solid var(--dot-line);
     box-shadow: 0 1px 3px rgba(33, 50, 61, .06);
 }
 
-.navbar-default .navbar-nav > li > a {
-    color: var(--dot-ink);
+/* Nav text was white for the blue bar; on white it needs the ink colour. */
+.navbar-default .navbar-nav > li > a,
+.navbar-default .navbar-text,
+.navbar-default .navbar-link {
+    color: var(--dot-ink) !important;
     font-weight: 500;
+}
+
+/* The brand cell has its own background for the active state. */
+.navbar-default .navbar-brand,
+.navbar-default .navbar-brand:hover,
+.navbar-default .navbar-brand:focus {
+    background-color: transparent !important;
+}
+
+.navbar-default .navbar-brand.active,
+.navbar-default .navbar-brand.active:hover {
+    background-color: var(--dot-brand-light) !important;
+}
+
+/* Mobile toggle bars were white to sit on blue. */
+.navbar-default .navbar-toggle .icon-bar {
+    background-color: var(--dot-ink) !important;
+}
+.navbar-default .navbar-toggle {
+    border-color: var(--dot-line);
 }
 
 .navbar-default .navbar-nav > li > a:hover,
 .navbar-default .navbar-nav > li > a:focus {
-    color: var(--dot-brand);
+    color: var(--dot-brand) !important;
+    background-color: var(--dot-brand-light);
 }
 
 .navbar-default .navbar-nav > .active > a,
 .navbar-default .navbar-nav > .active > a:hover,
 .navbar-default .navbar-nav > .active > a:focus,
 .navbar-default .navbar-nav > .open > a,
-.navbar-default .navbar-nav > .open > a:hover {
-    background: var(--dot-brand-light);
-    color: var(--dot-brand-dark);
+.navbar-default .navbar-nav > .open > a:hover,
+.navbar-default .navbar-nav > .open > a:focus {
+    background-color: var(--dot-brand-light) !important;
+    color: var(--dot-brand-dark) !important;
+    box-shadow: inset 0 -2px 0 var(--dot-brand);
 }
 
 /* The logo is an SVG swapped in via the layout.header_logo filter. Give it

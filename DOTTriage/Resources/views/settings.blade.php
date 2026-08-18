@@ -210,6 +210,72 @@
         </div>
     </div>
 
+    {{-- ── Data retention ────────────────────────────────────────── --}}
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <strong>Data retention</strong>
+            <a href="{{ route('triage.retention.preview') }}"
+               class="btn btn-default btn-xs pull-right">Preview what would be deleted</a>
+        </div>
+        <div class="panel-body">
+            <p class="triage-meta" style="margin-bottom:16px;">
+                Unlike closing, deletion is <strong>permanent</strong>: the conversation,
+                its messages and its attachments are removed and cannot be recovered.
+                Only resolved (closed) tickets are ever eligible.
+            </p>
+
+            <form method="POST" action="{{ route('triage.retention.save') }}" class="form-horizontal">
+                {{ csrf_field() }}
+
+                @foreach ($retention as $key => $s)
+                    <div class="form-group">
+                        @if ($s['type'] === 'bool')
+                            <div class="col-sm-9 col-sm-offset-3">
+                                <label style="font-weight:normal;">
+                                    <input type="checkbox" name="{{ $key }}" value="1"
+                                        {{ $s['value'] ? 'checked' : '' }}>
+                                    <strong>{{ $s['label'] }}</strong>
+                                </label>
+                                <p class="help-block" style="margin-top:2px;">{{ $s['help'] }}</p>
+                            </div>
+                        @else
+                            <label class="col-sm-3 control-label">{{ $s['label'] }}</label>
+                            <div class="col-sm-4">
+                                <select name="{{ $key }}" class="form-control">
+                                    @foreach ($s['choices'] as $val => $label)
+                                        <option value="{{ $val }}"
+                                            {{ (string) $s['value'] === (string) $val ? 'selected' : '' }}>
+                                            {{ $label }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <p class="help-block">{{ $s['help'] }}</p>
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+
+                <div class="form-group">
+                    <div class="col-sm-9 col-sm-offset-3">
+                        <button type="submit" class="btn btn-primary">Save retention settings</button>
+                    </div>
+                </div>
+            </form>
+
+            <hr>
+            <div class="triage-stats">
+                <span>
+                    <span class="triage-meta">Past the retention period now</span>
+                    <strong class="{{ $retentionEligible ? 'text-warning' : '' }}">{{ $retentionEligible }}</strong>
+                </span>
+            </div>
+            <p class="triage-meta" style="margin-top:10px;">
+                Deletion runs via <code>php artisan triage:retention --apply</code> on the
+                server. Nothing is deleted just by saving these settings.
+            </p>
+        </div>
+    </div>
+
     {{-- ── Non-support mail ──────────────────────────────────────── --}}
     <div class="panel panel-default">
         <div class="panel-heading"><strong>Non-support mail (30 days)</strong></div>

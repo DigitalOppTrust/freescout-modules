@@ -33,6 +33,7 @@ class TriageServiceProvider extends ServiceProvider
         $this->commands([
             \Modules\DOTTriage\Console\TriageRun::class,
             \Modules\DOTTriage\Console\TriageSweep::class,
+            \Modules\DOTTriage\Console\TriageRetention::class,
         ]);
     }
 

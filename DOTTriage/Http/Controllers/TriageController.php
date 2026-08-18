@@ -9,6 +9,7 @@ use Modules\DOTTriage\Entities\TriageDecision;
 use Modules\DOTTriage\Services\ClaudeClient;
 use Modules\DOTTriage\Services\Settings;
 use Modules\DOTTriage\Services\AutoCloser;
+use Modules\DOTTriage\Services\RetentionSweeper;
 
 class TriageController extends Controller
 {
@@ -61,6 +62,8 @@ class TriageController extends Controller
             'noiseReopened' => TriageDecision::noiseReopened(30),
             'closing'   => Settings::group('closing'),
             'closeStats'=> TriageDecision::closeCounts(30),
+            'retention' => Settings::group('retention'),
+            'retentionEligible' => RetentionSweeper::eligibleCount(),
         ]);
     }
 
@@ -153,6 +156,42 @@ class TriageController extends Controller
             'noise'    => $closer->sweepBacklogNoise(),
             'inactive' => $closer->sweepInactive(),
             'resolved' => $closer->sweepResolved(),
+        ]);
+    }
+
+    /** Save the data-retention settings. */
+    public function saveRetention(Request $request)
+    {
+        foreach (Settings::schema() as $key => $spec) {
+            if ($spec['group'] !== 'retention') {
+                continue;
+            }
+
+            if ($spec['type'] === 'bool') {
+                // An unchecked box submits nothing, so absence means false.
+                Settings::set($key, $request->input($key) ? '1' : '0');
+            } elseif ($request->has($key)) {
+                Settings::set($key, $request->input($key));
+            }
+        }
+
+        return redirect()->route('triage.settings')
+            ->with('success', 'Retention settings saved.');
+    }
+
+    /**
+     * Show what retention would delete, without deleting anything. Works
+     * even while retention is switched off, so the blast radius can be
+     * inspected before enabling it.
+     */
+    public function previewRetention()
+    {
+        return view('triage::retention_preview', [
+            'rows'    => (new RetentionSweeper(true))->collect(),
+            'total'   => RetentionSweeper::eligibleCount(),
+            'cutoff'  => substr(RetentionSweeper::cutoff(), 0, 10),
+            'months'  => Settings::get('retention_months'),
+            'enabled' => Settings::get('retention_enabled'),
         ]);
     }
 

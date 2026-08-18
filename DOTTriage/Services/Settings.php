@@ -132,6 +132,57 @@ class Settings
                 'help'    => 'Strictest option: if an agent owns it, only they close it. Useful '
                             .'while you are still building trust in automatic closing.',
             ],
+
+            // ── Data retention ───────────────────────────────────────
+            // Off by default even though the period defaults to 12 months:
+            // deletion is the one action in this module that cannot be
+            // undone, so it must be a deliberate choice, not a side effect
+            // of installing an update.
+            'retention_enabled' => [
+                'type'    => 'bool',
+                'default' => false,
+                'env'     => 'TRIAGE_RETENTION_ENABLED',
+                'group'   => 'retention',
+                'label'   => 'Permanently delete resolved tickets after the retention period',
+                'help'    => 'Applies only to closed tickets — open, pending and spam '
+                            .'conversations are never touched. Deletes the conversation, its '
+                            .'messages and its attachments permanently. This cannot be undone. '
+                            .'Customer profiles are kept; removing a person is done from their '
+                            .'profile page.',
+            ],
+            'retention_months' => [
+                'type'    => 'choice',
+                'default' => 12,
+                'env'     => 'TRIAGE_RETENTION_MONTHS',
+                'group'   => 'retention',
+                'label'   => 'Retention period',
+                'help'    => 'Calendar time since the ticket was closed — weekends count, '
+                            .'unlike the closing timers above. Any later activity on a ticket '
+                            .'restarts its clock in full.',
+                'choices' => [
+                    3  => '3 months',
+                    6  => '6 months',
+                    12 => '12 months (recommended)',
+                    24 => '2 years',
+                    36 => '3 years',
+                    60 => '5 years',
+                ],
+            ],
+            'retention_max_per_run' => [
+                'type'    => 'choice',
+                'default' => 100,
+                'env'     => null,
+                'group'   => 'retention',
+                'label'   => 'Maximum deletions per run',
+                'help'    => 'A safety valve. If the settings are ever wrong, this bounds the '
+                            .'damage to one batch rather than the whole archive.',
+                'choices' => [
+                    25   => '25',
+                    100  => '100',
+                    500  => '500',
+                    1000 => '1000 (no practical limit)',
+                ],
+            ],
         ];
     }
 

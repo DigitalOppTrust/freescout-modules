@@ -20,3 +20,6 @@ Route::get('/decisions', 'TriageController@decisions')->name('triage.decisions')
 
 Route::post('/settings/closing', 'TriageController@saveClosing')->name('triage.closing.save');
 Route::get('/settings/closing/preview', 'TriageController@previewClosing')->name('triage.closing.preview');
+
+Route::post('/settings/retention', 'TriageController@saveRetention')->name('triage.retention.save');
+Route::get('/settings/retention/preview', 'TriageController@previewRetention')->name('triage.retention.preview');
