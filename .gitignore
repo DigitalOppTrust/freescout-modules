@@ -66,3 +66,6 @@ Thumbs.db
 # cannot run composer per-module, so these must be in the repo.
 !DOTMCP/vendor/
 !DOTMCP/vendor/**
+
+# Local-only skill: describes how to reach production. Never publish.
+.claude/skills/production-access/
