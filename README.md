@@ -9,6 +9,7 @@ Custom [FreeScout](https://freescout.net/) modules built and maintained by
 |---|---|---|
 | `DOTTriage` | In development | AI-assisted ticket routing and SLA escalation |
 | `DOTReports` | In development | Volume, triage effectiveness and resolution reporting |
+| `DOTLog` | In development | Per-conversation event log for debugging the mail pipeline |
 
 ### Triage
 
@@ -36,6 +37,18 @@ automatically, and how long issues take to answer and resolve.
 
 See [`DOTReports/README.md`](DOTReports/README.md) for the metric definitions.
 
+### DOTLog
+
+A filterable per-conversation event log for debugging the mail pipeline: what
+arrived, what triage did, who was assigned, what mail was actually sent.
+
+- **One timeline per ticket** instead of four separate logs
+- **Never stores message bodies** — metadata and subjects only, admin-only view
+- **Self-pruning** — entries older than the configurable retention period
+  (default 21 days) are deleted nightly
+
+See [`DOTLog/README.md`](DOTLog/README.md) for the event reference.
+
 ## Installation
 
 Modules are installed into a FreeScout instance's `Modules/` directory.
@@ -46,6 +59,7 @@ intended to live in separate repositories.
 git clone https://github.com/DigitalOppTrust/freescout-modules.git /opt/freescout-modules
 ln -s /opt/freescout-modules/DOTTriage  /path/to/freescout/Modules/DOTTriage
 ln -s /opt/freescout-modules/DOTReports /path/to/freescout/Modules/DOTReports
+ln -s /opt/freescout-modules/DOTLog     /path/to/freescout/Modules/DOTLog
 cd /path/to/freescout
 php artisan freescout:module-install
 php artisan freescout:clear-cache
@@ -80,6 +94,8 @@ No credentials are stored in this repository.
 | `TRIAGE_MODEL` | `claude-haiku-4-5-20251001` | Model used for routing |
 | `TRIAGE_CONFIDENCE` | `0.75` | Minimum confidence to auto-assign |
 | `TRIAGE_DAILY_LIMIT` | `500` | Maximum API calls per day |
+| `DOTLOG_ENABLED` | `true` | DOTLog capture kill switch |
+| `DOTLOG_RETENTION_DAYS` | `21` | DOTLog retention until saved in the UI |
 
 ## Requirements
 

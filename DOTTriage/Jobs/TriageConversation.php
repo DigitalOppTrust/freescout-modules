@@ -77,6 +77,8 @@ class TriageConversation implements ShouldQueue
 
         if ($decision->error) {
             \Log::warning('[Triage] conversation '.$conversation->id.' failed: '.$decision->error);
+            $this->dotlog('triage.failed', 'Triage failed: '.$decision->error,
+                $conversation, ['level' => 'error']);
             $this->addNote($conversation, 'Triage failed: '.$decision->error);
             return;
         }
@@ -175,6 +177,10 @@ class TriageConversation implements ShouldQueue
         $conversation->status = \App\Conversation::STATUS_CLOSED;
         $conversation->closed_at = now();
         $conversation->save();
+
+        $this->dotlog('triage.closed_noise',
+            'Closed as non-support ('.NoiseDetector::label($category).'). '.$reason,
+            $conversation);
     }
 
     /**
@@ -225,6 +231,12 @@ class TriageConversation implements ShouldQueue
         ));
 
         \Log::info('[Triage] assigned conversation '.$conversation->id.' to user '.$profile->user_id);
+
+        $this->dotlog('triage.assigned',
+            'Triage assigned to '.$profile->userName().' ('.$decision->method
+            .($decision->confidence !== null
+                ? ', confidence '.number_format($decision->confidence, 2) : '').')',
+            $conversation, ['user_id' => $profile->user_id]);
     }
 
     protected function suggest($conversation, $profile, $decision, $confident, $threshold)
@@ -244,6 +256,10 @@ class TriageConversation implements ShouldQueue
             $reason,
             $decision->reasoning
         ));
+
+        $this->dotlog('triage.suggested',
+            'Triage suggested '.$profile->userName().' but did not assign: '.$reason,
+            $conversation, ['user_id' => $profile->user_id]);
     }
 
     /**
@@ -273,6 +289,20 @@ class TriageConversation implements ShouldQueue
             \Log::warning('[Triage] could not add note to conversation '
                 .$conversation->id.': '.$e->getMessage());
         }
+    }
+
+    /**
+     * Record a triage event in DOTLog, when that module is installed.
+     * Guarded by class_exists so triage works standalone.
+     */
+    protected function dotlog($event, $message, $conversation, array $extra = [])
+    {
+        if (!class_exists(\Modules\DOTLog\Services\DotLog::class)) {
+            return;
+        }
+
+        \Modules\DOTLog\Services\DotLog::write($event, $message,
+            $extra + ['conversation' => $conversation]);
     }
 
     public function failed(\Throwable $e)

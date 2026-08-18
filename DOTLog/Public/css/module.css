@@ -1,0 +1,29 @@
+.dotlog-meta {
+    color: #8e9ba7;
+    font-size: 12px;
+}
+
+.dotlog-filters {
+    margin-bottom: 15px;
+}
+
+.dotlog-table td {
+    vertical-align: top;
+}
+
+.dotlog-time {
+    white-space: nowrap;
+    width: 1%;
+}
+
+.dotlog-context span {
+    margin-right: 12px;
+}
+
+.dotlog-warning td:first-child {
+    border-left: 3px solid #f0ad4e;
+}
+
+.dotlog-error td:first-child {
+    border-left: 3px solid #d9534f;
+}

@@ -150,6 +150,11 @@ class TriageServiceProvider extends ServiceProvider
         }
 
         \Modules\DOTTriage\Jobs\TriageConversation::dispatch($conversation->id);
+
+        if (class_exists(\Modules\DOTLog\Services\DotLog::class)) {
+            \Modules\DOTLog\Services\DotLog::write('triage.queued',
+                'Queued for triage', ['conversation' => $conversation]);
+        }
     }
 
     /** Is this thread a later message on a conversation that already existed? */
