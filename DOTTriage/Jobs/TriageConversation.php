@@ -232,6 +232,28 @@ class TriageConversation implements ShouldQueue
 
         \Log::info('[Triage] assigned conversation '.$conversation->id.' to user '.$profile->user_id);
 
+        // Writing user_id directly skips the ConversationUserChanged event,
+        // so core never emails the assignee. Register the assignment with
+        // the notification pipeline explicitly. The caused-by user is null,
+        // not the assignee: FreeScout excludes the causer from recipients,
+        // and naming the assignee would suppress the very notification this
+        // exists to send. process_now matters too - this job runs in the
+        // queue worker, where nothing else flushes the event queue.
+        try {
+            \App\Subscription::registerEvent(
+                \App\Subscription::EVENT_TYPE_ASSIGNED, $conversation, null, true);
+
+            $this->dotlog('triage.notify',
+                'Assignment notification registered for '.$profile->userName(),
+                $conversation, ['user_id' => $profile->user_id]);
+        } catch (\Throwable $e) {
+            \Log::warning('[Triage] could not register assignment notification for conversation '
+                .$conversation->id.': '.$e->getMessage());
+            $this->dotlog('triage.notify',
+                'Assignment notification FAILED to register: '.$e->getMessage(),
+                $conversation, ['level' => 'error', 'user_id' => $profile->user_id]);
+        }
+
         $this->dotlog('triage.assigned',
             'Triage assigned to '.$profile->userName().' ('.$decision->method
             .($decision->confidence !== null
