@@ -114,6 +114,34 @@ class TriageServiceProvider extends ServiceProvider
             }
         });
 
+        // Manual Resolved control in the conversation's More Actions menu.
+        // Part of the folder feature, so also outside the kill switch.
+        \Eventy::addAction('conversation.append_action_buttons', function ($conversation, $mailbox) {
+            try {
+                if ((int) $conversation->state !== (int) \App\Conversation::STATE_PUBLISHED) {
+                    return;
+                }
+
+                if (\Modules\DOTTriage\Services\ResolvedFolder::contains($conversation)) {
+                    $route = route('triage.unresolve', ['id' => $conversation->id]);
+                    $label = __('Remove from Resolved');
+                } else {
+                    $route = route('triage.resolve', ['id' => $conversation->id]);
+                    $label = __('Mark as resolved');
+                }
+
+                echo '<li>'
+                    .'<a href="#" role="button" onclick="document.getElementById(\'triage-resolve-form\').submit(); return false;">'
+                    .'<i class="glyphicon glyphicon-ok"></i> '.e($label).'</a>'
+                    .'<form id="triage-resolve-form" method="POST" action="'.e($route).'" style="display:none;">'
+                    .'<input type="hidden" name="_token" value="'.e(csrf_token()).'">'
+                    .'</form>'
+                    .'</li>';
+            } catch (\Throwable $e) {
+                \Log::error('[Triage] resolve menu item failed: '.$e->getMessage());
+            }
+        }, 20, 2);
+
         // Everything below acts on tickets, so it respects the kill switch.
         if (!config('triage.enabled')) {
             return;

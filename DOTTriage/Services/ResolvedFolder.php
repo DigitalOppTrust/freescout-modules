@@ -122,6 +122,20 @@ class ResolvedFolder
         $folder->updateCounters();
     }
 
+    /** Is this conversation in the Resolved folder? */
+    public static function contains($conversation)
+    {
+        $folder = self::folder($conversation->mailbox_id);
+        if (!$folder) {
+            return false;
+        }
+
+        return \DB::table('conversation_folder')
+            ->where('folder_id', $folder->id)
+            ->where('conversation_id', $conversation->id)
+            ->exists();
+    }
+
     /** Take a conversation out of the Resolved folder. Safe to call blind. */
     public static function remove($conversation)
     {

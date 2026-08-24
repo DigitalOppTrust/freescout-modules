@@ -32,6 +32,12 @@ core behaviour is untouched. They are filtered out of the Closed folder view
 so each ticket appears in exactly one of the two. If anything reopens or
 deletes the conversation, it leaves the folder automatically.
 
+Agents can also manage membership by hand from the conversation's More
+Actions menu: **Mark as resolved** closes the ticket (if open) and files it
+under Resolved; **Remove from Resolved** puts it back in Closed. Reopening
+is core FreeScout — set the status to Active and the ticket leaves the
+folder on its own.
+
 ## Hooks used
 
 | Hook | Purpose |
