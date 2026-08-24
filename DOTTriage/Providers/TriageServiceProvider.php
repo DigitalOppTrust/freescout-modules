@@ -114,29 +114,58 @@ class TriageServiceProvider extends ServiceProvider
             }
         });
 
-        // Manual Resolved control in the conversation's More Actions menu.
-        // Part of the folder feature, so also outside the kill switch.
-        \Eventy::addAction('conversation.append_action_buttons', function ($conversation, $mailbox) {
+        // Manual Resolved control: an entry at the top of the More Actions
+        // menu, and - because that is where people look first - a "Resolved"
+        // entry added to the status dropdown. Part of the folder feature, so
+        // also outside the kill switch.
+        \Eventy::addAction('conversation.prepend_action_buttons', function ($conversation, $mailbox) {
             try {
                 if ((int) $conversation->state !== (int) \App\Conversation::STATE_PUBLISHED) {
                     return;
                 }
 
+                $item = function ($route, $label, $formClass = '') {
+                    echo '<li>'
+                        .'<a href="#" role="button" onclick="this.parentNode.querySelector(\'form\').submit(); return false;">'
+                        .'<i class="glyphicon glyphicon-ok"></i> '.e($label).'</a>'
+                        .'<form'.($formClass ? ' class="'.$formClass.'"' : '').' method="POST" action="'.e($route).'" style="display:none;">'
+                        .'<input type="hidden" name="_token" value="'.e(csrf_token()).'">'
+                        .'</form>'
+                        .'</li>';
+                };
+
                 if (\Modules\DOTTriage\Services\ResolvedFolder::contains($conversation)) {
-                    $route = route('triage.unresolve', ['id' => $conversation->id]);
-                    $label = __('Remove from Resolved');
-                } else {
-                    $route = route('triage.resolve', ['id' => $conversation->id]);
-                    $label = __('Mark as resolved');
+                    $item(route('triage.unresolve', ['id' => $conversation->id]), __('Remove from Resolved'));
+                    return;
                 }
 
-                echo '<li>'
-                    .'<a href="#" role="button" onclick="document.getElementById(\'triage-resolve-form\').submit(); return false;">'
-                    .'<i class="glyphicon glyphicon-ok"></i> '.e($label).'</a>'
-                    .'<form id="triage-resolve-form" method="POST" action="'.e($route).'" style="display:none;">'
-                    .'<input type="hidden" name="_token" value="'.e(csrf_token()).'">'
-                    .'</form>'
-                    .'</li>';
+                $item(route('triage.resolve', ['id' => $conversation->id]), __('Mark as resolved'), 'triage-resolve-form');
+
+                // Spam conversations only offer "Not Spam"; resolving one
+                // makes no sense, so the status-dropdown entry stays off.
+                if ((int) $conversation->status === (int) \App\Conversation::STATUS_SPAM) {
+                    return;
+                }
+
+                // The status-dropdown entry submits the form above instead of
+                // carrying a data-status. The capture-phase listener plus
+                // stopImmediatePropagation keeps core's own status-change
+                // handler (bound to .conv-status li > a) away from it.
+                echo '<script>(function(){'
+                    .'function init(){'
+                    .'var form=document.querySelector(".triage-resolve-form");'
+                    .'var ul=document.querySelector("#conv-status ul.conv-status");'
+                    .'if(!form||!ul){return;}'
+                    .'var li=document.createElement("li");'
+                    .'var a=document.createElement("a");'
+                    .'a.href="#";'
+                    .'a.textContent='.json_encode(__('Resolved')).';'
+                    .'a.addEventListener("click",function(e){e.preventDefault();e.stopImmediatePropagation();form.submit();},true);'
+                    .'li.appendChild(a);'
+                    .'ul.appendChild(li);'
+                    .'}'
+                    .'if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",init);}else{init();}'
+                    .'})();</script>';
             } catch (\Throwable $e) {
                 \Log::error('[Triage] resolve menu item failed: '.$e->getMessage());
             }
