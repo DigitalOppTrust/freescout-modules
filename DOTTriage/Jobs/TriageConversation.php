@@ -212,7 +212,12 @@ class TriageConversation implements ShouldQueue
     protected function assign($conversation, $profile, $decision)
     {
         $conversation->user_id = $profile->user_id;
+        // Assigning user_id directly skips changeUser() and with it
+        // updateFolder() - without this the conversation stays filed under
+        // Unassigned even though it has an assignee.
+        $conversation->updateFolder();
         $conversation->save();
+        $conversation->mailbox->updateFoldersCounters();
 
         $profile->markAssigned();
 
