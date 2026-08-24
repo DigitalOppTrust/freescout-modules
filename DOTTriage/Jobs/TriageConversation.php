@@ -88,6 +88,7 @@ class TriageConversation implements ShouldQueue
         // from senders that do not set Precedence).
         if ($decision->noise_category === 'not_support') {
             $decision->closed = true;
+            $decision->close_reason = 'noise';
             $decision->save();
             $this->closeAsNoise($conversation, 'not_support', $decision->reasoning);
             \Log::info('[Triage] closed conversation '.$conversation->id.' as not_support (model)');
@@ -150,6 +151,7 @@ class TriageConversation implements ShouldQueue
             'confidence'      => 1.0,
             'applied'         => false,
             'closed'          => true,
+            'close_reason'    => 'noise',
         ]);
 
         $this->closeAsNoise($conversation, $result['category'], $result['reason']);
@@ -176,7 +178,12 @@ class TriageConversation implements ShouldQueue
 
         $conversation->status = \App\Conversation::STATUS_CLOSED;
         $conversation->closed_at = now();
+        // Same trap as assign() and AutoCloser::close(): setting status
+        // directly skips setStatus(), so the folder must be re-derived by
+        // hand or the conversation stays filed where it was.
+        $conversation->updateFolder();
         $conversation->save();
+        $conversation->mailbox->updateFoldersCounters();
 
         $this->dotlog('triage.closed_noise',
             'Closed as non-support ('.NoiseDetector::label($category).'). '.$reason,
