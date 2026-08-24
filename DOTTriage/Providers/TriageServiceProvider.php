@@ -139,33 +139,11 @@ class TriageServiceProvider extends ServiceProvider
                     return;
                 }
 
+                // Deliberately NOT in the status dropdown: Resolved is not a
+                // real status (the ticket becomes Closed underneath), and a
+                // pseudo-entry there that then displays as "Closed" reads as
+                // a bug. Folder membership is an action, not a status.
                 $item(route('triage.resolve', ['id' => $conversation->id]), __('Mark as resolved'), 'triage-resolve-form');
-
-                // Spam conversations only offer "Not Spam"; resolving one
-                // makes no sense, so the status-dropdown entry stays off.
-                if ((int) $conversation->status === (int) \App\Conversation::STATUS_SPAM) {
-                    return;
-                }
-
-                // The status-dropdown entry submits the form above instead of
-                // carrying a data-status. The capture-phase listener plus
-                // stopImmediatePropagation keeps core's own status-change
-                // handler (bound to .conv-status li > a) away from it.
-                echo '<script>(function(){'
-                    .'function init(){'
-                    .'var form=document.querySelector(".triage-resolve-form");'
-                    .'var ul=document.querySelector("#conv-status ul.conv-status");'
-                    .'if(!form||!ul){return;}'
-                    .'var li=document.createElement("li");'
-                    .'var a=document.createElement("a");'
-                    .'a.href="#";'
-                    .'a.textContent='.json_encode(__('Resolved')).';'
-                    .'a.addEventListener("click",function(e){e.preventDefault();e.stopImmediatePropagation();form.submit();},true);'
-                    .'li.appendChild(a);'
-                    .'ul.appendChild(li);'
-                    .'}'
-                    .'if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",init);}else{init();}'
-                    .'})();</script>';
             } catch (\Throwable $e) {
                 \Log::error('[Triage] resolve menu item failed: '.$e->getMessage());
             }
