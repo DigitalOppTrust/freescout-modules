@@ -67,6 +67,53 @@ class TriageServiceProvider extends ServiceProvider
                 .'<i class="glyphicon glyphicon-random"></i> Triage</a></li>';
         });
 
+        // The Resolved folder is registered regardless of the kill switch:
+        // tickets already in it must stay visible while triage is off.
+        \Modules\DOTTriage\Services\ResolvedFolder::register();
+
+        // Consistency guards, also outside the kill switch: a ticket that
+        // stops being closed must leave Resolved however it was reopened.
+        \Eventy::addAction('conversation.status_changed', function ($conversation) {
+            try {
+                if (!$conversation->isClosed()) {
+                    \Modules\DOTTriage\Services\ResolvedFolder::remove($conversation);
+                }
+            } catch (\Throwable $e) {
+                \Log::error('[Triage] status_changed resolved-folder cleanup failed: '.$e->getMessage());
+            }
+        });
+
+        // FreeScout reopens a closed conversation on a customer reply without
+        // firing status_changed, so watch threads too. Priority 30 runs this
+        // after maybeQueueTriage (default 20), which restores the closed
+        // status when the "reply" was only an auto-responder - in that case
+        // the ticket stays in Resolved.
+        \Eventy::addAction('thread.created', function ($thread) {
+            try {
+                if (!$thread || (int) $thread->type !== (int) \App\Thread::TYPE_CUSTOMER) {
+                    return;
+                }
+                $conversation = $thread->conversation;
+                if ($conversation && !$conversation->isClosed()) {
+                    \Modules\DOTTriage\Services\ResolvedFolder::remove($conversation);
+                }
+            } catch (\Throwable $e) {
+                \Log::error('[Triage] thread.created resolved-folder cleanup failed: '.$e->getMessage());
+            }
+        }, 30);
+
+        // Deleting a resolved ticket takes it out of the folder, keeping the
+        // sidebar counter honest - the pivot count ignores state.
+        \Eventy::addAction('conversation.state_changed', function ($conversation) {
+            try {
+                if ((int) $conversation->state === (int) \App\Conversation::STATE_DELETED) {
+                    \Modules\DOTTriage\Services\ResolvedFolder::remove($conversation);
+                }
+            } catch (\Throwable $e) {
+                \Log::error('[Triage] state_changed resolved-folder cleanup failed: '.$e->getMessage());
+            }
+        });
+
         // Everything below acts on tickets, so it respects the kill switch.
         if (!config('triage.enabled')) {
             return;

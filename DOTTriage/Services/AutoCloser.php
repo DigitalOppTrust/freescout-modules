@@ -374,7 +374,22 @@ class AutoCloser
 
         $conversation->status    = \App\Conversation::STATUS_CLOSED;
         $conversation->closed_at = now();
+        // Assigning status directly skips setStatus(), so the folder must be
+        // re-derived by hand - without this the conversation keeps the
+        // folder_id it had while open and never shows up under Closed.
+        $conversation->updateFolder();
         $conversation->save();
+
+        if ($reason === self::REASON_RESOLVED) {
+            try {
+                ResolvedFolder::add($conversation);
+            } catch (\Throwable $e) {
+                \Log::warning('[Triage] could not move conversation '
+                    .$conversation->id.' to Resolved: '.$e->getMessage());
+            }
+        }
+
+        $conversation->mailbox->updateFoldersCounters();
 
         \Log::info('[Triage] auto-closed conversation '.$conversation->id.' ('.$reason.')');
     }
