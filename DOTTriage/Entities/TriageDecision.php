@@ -41,6 +41,11 @@ class TriageDecision extends Model
 
         return self::where('closed', true)
             ->where('created_at', '>=', $since)
+            // Inactivity/resolved closes have no noise_category; without this
+            // the NULL group becomes a null pluck key, which PHP 8.5 treats
+            // as a deprecated array offset - and FreeScout escalates that to
+            // an exception, taking down the settings page.
+            ->whereNotNull('noise_category')
             ->selectRaw('noise_category, COUNT(*) AS total')
             ->groupBy('noise_category')
             ->pluck('total', 'noise_category')
