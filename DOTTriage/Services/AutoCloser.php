@@ -112,7 +112,13 @@ class AutoCloser
         $minutes = (int) Settings::get('close_after_inactive_minutes');
         $results = [];
 
-        $conversations = \App\Conversation::where('status', \App\Conversation::STATUS_ACTIVE)
+        // Pending counts too: the team uses it as "waiting on the customer"
+        // (a reply often sets it), which is exactly the state this pass
+        // exists to expire. Only the noise pass stays Active-only.
+        $conversations = \App\Conversation::whereIn('status', [
+                \App\Conversation::STATUS_ACTIVE,
+                \App\Conversation::STATUS_PENDING,
+            ])
             ->orderBy('id')
             ->limit(500)
             ->get();
@@ -205,7 +211,10 @@ class AutoCloser
             return ['skipped' => 'No Claude API key configured.'];
         }
 
-        $conversations = \App\Conversation::where('status', \App\Conversation::STATUS_ACTIVE)
+        $conversations = \App\Conversation::whereIn('status', [
+                \App\Conversation::STATUS_ACTIVE,
+                \App\Conversation::STATUS_PENDING,
+            ])
             ->orderBy('id')
             ->limit(200)
             ->get();

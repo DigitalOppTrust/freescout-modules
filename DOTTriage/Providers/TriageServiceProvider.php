@@ -72,6 +72,15 @@ class TriageServiceProvider extends ServiceProvider
             return;
         }
 
+        // Run the close sweep hourly. Core exposes its scheduler to modules
+        // via the 'schedule' filter (app/Console/Kernel.php); without this
+        // registration the sweep command exists but never runs on its own.
+        // --apply matters: the command defaults to a dry run.
+        \Eventy::addFilter('schedule', function ($schedule) {
+            $schedule->command('triage:sweep --apply')->hourly()->withoutOverlapping();
+            return $schedule;
+        });
+
         // A new customer message arrived. Queue triage for it if the
         // conversation has nobody assigned.
         //
