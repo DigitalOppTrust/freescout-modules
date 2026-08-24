@@ -380,15 +380,6 @@ class AutoCloser
         $conversation->updateFolder();
         $conversation->save();
 
-        if ($reason === self::REASON_RESOLVED) {
-            try {
-                ResolvedFolder::add($conversation);
-            } catch (\Throwable $e) {
-                \Log::warning('[Triage] could not move conversation '
-                    .$conversation->id.' to Resolved: '.$e->getMessage());
-            }
-        }
-
         $conversation->mailbox->updateFoldersCounters();
 
         \Log::info('[Triage] auto-closed conversation '.$conversation->id.' ('.$reason.')');

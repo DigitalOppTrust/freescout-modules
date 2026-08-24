@@ -23,6 +23,3 @@ Route::get('/settings/closing/preview', 'TriageController@previewClosing')->name
 
 Route::post('/settings/retention', 'TriageController@saveRetention')->name('triage.retention.save');
 Route::get('/settings/retention/preview', 'TriageController@previewRetention')->name('triage.retention.preview');
-
-Route::post('/resolve/{id}', 'ResolveController@resolve')->name('triage.resolve');
-Route::post('/unresolve/{id}', 'ResolveController@unresolve')->name('triage.unresolve');
