@@ -100,12 +100,12 @@
 
 .dothelp-hero {
     text-align: center;
-    padding: 6px 0 26px;
+    padding: 10px 0 28px;
 }
 
 .dothelp-hero-title {
-    margin: 0 0 6px;
-    font-size: 26px;
+    margin: 0 0 8px;
+    font-size: 27px;
     font-weight: 600;
     color: var(--dh-ink);
 }
@@ -119,6 +119,7 @@
 .dothelp-choices {
     display: flex;
     flex-wrap: wrap;
+    align-items: stretch;
     margin: 0 -10px 30px;
 }
 
@@ -129,7 +130,7 @@
     text-align: center;
     flex: 1 1 320px;
     margin: 0 10px 20px;
-    padding: 30px 26px 26px;
+    padding: 32px 28px 28px;
     border: 2px solid var(--dh-line);
     border-radius: 6px;
     background: #fff;
@@ -141,14 +142,16 @@
 .dothelp-choice:hover,
 .dothelp-choice:focus {
     border-color: var(--dh-brand);
-    box-shadow: 0 4px 16px rgba(33, 50, 61, .12);
+    box-shadow: 0 4px 18px rgba(33, 50, 61, .13);
     transform: translateY(-2px);
     text-decoration: none;
     color: var(--dh-ink);
 }
 
+.dothelp-choice-clock { margin-bottom: 14px; }
+
 .dothelp-choice-num {
-    font-size: 62px;
+    font-size: 64px;
     font-weight: 700;
     line-height: 1;
     color: var(--dh-brand);
@@ -156,23 +159,25 @@
 }
 
 .dothelp-choice-unit {
-    margin-top: 2px;
-    font-size: 13px;
+    margin-top: 4px;
+    font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: .1em;
+    letter-spacing: .12em;
     color: var(--dh-muted);
 }
 
 .dothelp-choice-label {
-    margin-top: 16px;
+    margin: 0 0 6px;
+    padding: 0;
+    border: 0;
     font-size: 19px;
     font-weight: 600;
     color: var(--dh-ink);
 }
 
 .dothelp-choice-blurb {
-    margin-top: 6px;
+    margin: 0;
     max-width: 30em;
     font-size: 13.5px;
     line-height: 1.55;
@@ -180,16 +185,15 @@
 }
 
 .dothelp-choice-covers {
-    display: block;
+    list-style: none;
     width: 100%;
     margin: 18px 0 0;
-    padding-top: 16px;
+    padding: 16px 0 0;
     border-top: 1px solid #EEF2F5;
     text-align: left;
 }
 
-.dothelp-choice-covers-item {
-    display: block;
+.dothelp-choice-covers li {
     position: relative;
     padding-left: 20px;
     margin-bottom: 7px;
@@ -198,7 +202,7 @@
     color: var(--dh-ink);
 }
 
-.dothelp-choice-covers-item:before {
+.dothelp-choice-covers li:before {
     content: "";
     position: absolute;
     left: 4px;
@@ -209,9 +213,11 @@
     background: var(--dh-brand);
 }
 
+/* Pushes the button to the bottom so both cards line up regardless of how
+   many bullets each one carries. */
 .dothelp-choice-cta {
-    margin-top: 18px;
-    padding: 9px 22px;
+    margin-top: auto;
+    padding: 10px 24px;
     border-radius: 3px;
     background: var(--dh-brand);
     color: #fff;
@@ -219,9 +225,11 @@
     font-weight: 600;
 }
 
-.dothelp-choice:hover .dothelp-choice-cta { background: var(--dh-brand-dark); }
+.dothelp-choice-covers + .dothelp-choice-cta { margin-top: 20px; }
 
-/* The hour is the fuller commitment - mark it without shouting. */
+.dothelp-choice:hover .dothelp-choice-cta,
+.dothelp-choice:focus .dothelp-choice-cta { background: var(--dh-brand-dark); }
+
 .dothelp-choice-one-hour { border-color: #C9DCE8; }
 
 /* ── Browse-all disclosure ─────────────────────────────────────── */

@@ -3,7 +3,7 @@
 @section('title', 'Help — '.$course['label'])
 
 @section('stylesheets')
-    <link rel="stylesheet" href="{{ asset('modules/dothelp/css/module.css') }}">
+    <link rel="stylesheet" href="{{ Modules\DOTHelp\Services\Handbook::stylesheet() }}">
 @endsection
 
 @section('content')

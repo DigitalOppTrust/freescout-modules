@@ -207,6 +207,25 @@ class Handbook
         ];
     }
 
+    /**
+     * The stylesheet URL, cache-busted by the file's own modification time.
+     *
+     * Without this a deploy changes the CSS but every browser that has
+     * already loaded the page keeps its cached copy, and the handbook renders
+     * as unstyled text - which looks like the module is broken rather than
+     * stale. Deriving the token from filemtime() means it changes exactly
+     * when the file does, with nothing to remember to bump by hand.
+     */
+    public static function stylesheet()
+    {
+        $url  = asset('modules/dothelp/css/module.css');
+        $path = __DIR__.'/../Public/css/module.css';
+
+        $version = @filemtime($path) ?: '1';
+
+        return $url.'?v='.$version;
+    }
+
     /** Does this slug name a real topic? Guards the route against path tricks. */
     public static function has($slug)
     {

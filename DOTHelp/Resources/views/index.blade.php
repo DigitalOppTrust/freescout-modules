@@ -3,7 +3,7 @@
 @section('title', 'Help')
 
 @section('stylesheets')
-    <link rel="stylesheet" href="{{ asset('modules/dothelp/css/module.css') }}">
+    <link rel="stylesheet" href="{{ Modules\DOTHelp\Services\Handbook::stylesheet() }}">
 @endsection
 
 @section('content')
@@ -11,32 +11,36 @@
 
     <div class="dothelp-hero">
         <h2 class="dothelp-hero-title">Help desk handbook</h2>
-        <p class="dothelp-hero-sub">
-            How much time do you have?
-        </p>
+        <p class="dothelp-hero-sub">How much time do you have?</p>
     </div>
 
     {{-- One question, two answers. Someone about to answer their first ticket
-         does not have an hour, and a list of sixteen pages gets read as
-         "later" - so the choice is time, and each answer is a single page. --}}
+         does not have half an hour, and a list of sixteen pages gets read as
+         "later" - so the choice is time, and each answer is a single page.
+
+         Built from block elements (div/h3/p/ul) rather than spans so that if
+         the stylesheet ever fails to load, this degrades to a readable
+         outline instead of one run-on paragraph. --}}
     <div class="dothelp-choices">
         @foreach ($courses as $key => $c)
             <a class="dothelp-choice dothelp-choice-{{ $key }}"
                href="{{ route('dothelp.course', $key) }}">
 
-                <span class="dothelp-choice-num">{{ $c['minutes'] }}</span>
-                <span class="dothelp-choice-unit">minutes</span>
+                <div class="dothelp-choice-clock">
+                    <div class="dothelp-choice-num">{{ $c['minutes'] }}</div>
+                    <div class="dothelp-choice-unit">minutes</div>
+                </div>
 
-                <span class="dothelp-choice-label">{{ $c['label'] }}</span>
-                <span class="dothelp-choice-blurb">{{ $c['blurb'] }}</span>
+                <h3 class="dothelp-choice-label">{{ $c['label'] }}</h3>
+                <p class="dothelp-choice-blurb">{{ $c['blurb'] }}</p>
 
-                <span class="dothelp-choice-covers">
+                <ul class="dothelp-choice-covers">
                     @foreach ($c['covers'] as $line)
-                        <span class="dothelp-choice-covers-item">{{ $line }}</span>
+                        <li>{{ $line }}</li>
                     @endforeach
-                </span>
+                </ul>
 
-                <span class="dothelp-choice-cta">{{ $c['cta'] }} &rarr;</span>
+                <div class="dothelp-choice-cta">{{ $c['cta'] }} &rarr;</div>
             </a>
         @endforeach
     </div>
