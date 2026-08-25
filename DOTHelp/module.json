@@ -1,0 +1,19 @@
+{
+    "name": "DOTHelp",
+    "alias": "dothelp",
+    "description": "In-app handbook explaining how the DOT help desk and its modules work",
+    "version": "0.1.0",
+    "detailsUrl": "",
+    "author": "DO Trust",
+    "requiredAppVersion": "1.8.0",
+    "license": "MIT",
+    "keywords": [],
+    "active": 1,
+    "order": 0,
+    "providers": [
+        "Modules\\DOTHelp\\Providers\\DOTHelpServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

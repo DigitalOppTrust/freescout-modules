@@ -1,0 +1,301 @@
+/*
+ * DOTHelp - the in-app handbook.
+ *
+ * Reuses the DOTTheme brand variables where they exist and falls back to the
+ * same hexes when the theme module is disabled, so the handbook is legible
+ * either way. Layout only - no attempt to restyle FreeScout itself.
+ */
+
+.dothelp {
+    --dh-brand: #0079B2;
+    --dh-brand-dark: #005F8C;
+    --dh-brand-light: #E6F2F8;
+    --dh-ink: #21323D;
+    --dh-muted: #6B7C87;
+    --dh-line: #DFE6EB;
+    max-width: 1080px;
+}
+
+/* ── Index ─────────────────────────────────────────────────────── */
+
+.dothelp-lede {
+    max-width: 46em;
+    margin-bottom: 26px;
+    color: var(--dh-ink);
+}
+
+.dothelp-lede p { font-size: 15px; line-height: 1.65; }
+
+.dothelp-grid {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -8px;
+}
+
+.dothelp-card {
+    display: flex;
+    align-items: flex-start;
+    width: calc(50% - 16px);
+    margin: 0 8px 16px;
+    padding: 14px 16px;
+    border: 1px solid var(--dh-line);
+    border-radius: 4px;
+    background: #fff;
+    text-decoration: none;
+    transition: border-color .12s, box-shadow .12s;
+}
+
+.dothelp-card:hover,
+.dothelp-card:focus {
+    border-color: var(--dh-brand);
+    box-shadow: 0 1px 4px rgba(33, 50, 61, .09);
+    text-decoration: none;
+}
+
+.dothelp-card-icon {
+    flex: 0 0 auto;
+    width: 30px;
+    padding-top: 2px;
+    color: var(--dh-brand);
+    font-size: 15px;
+}
+
+.dothelp-card-body { flex: 1 1 auto; }
+
+.dothelp-card-title {
+    display: block;
+    font-weight: 600;
+    color: var(--dh-ink);
+    margin-bottom: 3px;
+}
+
+.dothelp-card-summary {
+    display: block;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--dh-muted);
+}
+
+.dothelp-tag {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 6px;
+    border-radius: 2px;
+    background: var(--dh-brand-light);
+    color: var(--dh-brand-dark);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    vertical-align: 2px;
+}
+
+.dothelp-note {
+    margin-top: 18px;
+    font-size: 13px;
+    color: var(--dh-muted);
+}
+
+/* ── Topic page ────────────────────────────────────────────────── */
+
+.dothelp-back {
+    font-size: 13px;
+    font-weight: 400;
+    margin-right: 10px;
+    color: var(--dh-muted);
+}
+
+.dothelp-toc {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 24px;
+    border-left: 2px solid var(--dh-line);
+}
+
+.dothelp-toc li a {
+    display: block;
+    padding: 6px 12px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--dh-ink);
+    border-left: 2px solid transparent;
+    margin-left: -2px;
+}
+
+.dothelp-toc li a:hover {
+    background: #FBFCFD;
+    text-decoration: none;
+}
+
+.dothelp-toc li.active a {
+    border-left-color: var(--dh-brand);
+    background: var(--dh-brand-light);
+    color: var(--dh-brand-dark);
+    font-weight: 600;
+}
+
+.dothelp-content {
+    max-width: 46em;
+    color: var(--dh-ink);
+    line-height: 1.65;
+}
+
+.dothelp-content h3 {
+    margin-top: 30px;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--dh-line);
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.dothelp-content h4 {
+    margin-top: 20px;
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.dothelp-content p,
+.dothelp-content li { font-size: 14px; }
+
+.dothelp-intro {
+    font-size: 15px !important;
+    line-height: 1.6;
+    color: var(--dh-ink);
+    padding-bottom: 4px;
+}
+
+.dothelp-steps { padding-left: 20px; }
+.dothelp-steps li { margin-bottom: 9px; }
+
+/* ── Callouts ──────────────────────────────────────────────────── */
+
+.dothelp-callout {
+    margin: 18px 0;
+    padding: 12px 16px;
+    border-left: 3px solid var(--dh-brand);
+    background: var(--dh-brand-light);
+    border-radius: 0 3px 3px 0;
+}
+
+.dothelp-callout p { margin-bottom: 8px; }
+.dothelp-callout .dothelp-callout-last { margin-bottom: 0; }
+
+.dothelp-callout-warn {
+    border-left-color: #C77700;
+    background: #FDF6EC;
+}
+
+.dothelp-callout-quiet {
+    border-left-color: var(--dh-line);
+    background: #FBFCFD;
+    color: var(--dh-muted);
+}
+
+/* ── Tables ────────────────────────────────────────────────────── */
+
+.dothelp-table { margin: 14px 0 20px; font-size: 13px; }
+
+.dothelp-table > thead > tr > th {
+    border-bottom: 1px solid var(--dh-line);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--dh-muted);
+}
+
+.dothelp-table > tbody > tr > td {
+    border-top: 1px solid #EEF2F5;
+    vertical-align: top;
+    line-height: 1.55;
+}
+
+.dothelp-modules td:first-child { white-space: nowrap; }
+
+.dothelp-yes   { color: #2E7D32; font-weight: 600; }
+.dothelp-no    { color: var(--dh-muted); }
+.dothelp-admin { color: var(--dh-brand-dark); font-weight: 600; }
+.dothelp-maybe { color: #C77700; font-weight: 600; }
+
+/* ── Glossary ──────────────────────────────────────────────────── */
+
+.dothelp-glossary { margin-top: 16px; }
+
+.dothelp-glossary dt {
+    margin-top: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--dh-brand-dark);
+}
+
+.dothelp-glossary dd {
+    margin-left: 0;
+    padding-left: 14px;
+    border-left: 2px solid var(--dh-line);
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--dh-ink);
+}
+
+/* ── Diagram ───────────────────────────────────────────────────── */
+
+.dothelp-figure {
+    margin: 20px 0 26px;
+    padding: 12px;
+    border: 1px solid var(--dh-line);
+    border-radius: 4px;
+    background: #FBFCFD;
+    overflow-x: auto;
+}
+
+.dothelp-svg { width: 100%; min-width: 660px; height: auto; display: block; }
+
+.dothelp-svg .dh-box   { fill: #fff; stroke: #C3D0DA; stroke-width: 1; }
+.dothelp-svg .dh-ours  { fill: var(--dh-brand-light); stroke: var(--dh-brand); }
+.dothelp-svg .dh-human { fill: #EAF6EC; stroke: #6BAE72; }
+.dothelp-svg .dh-closed{ fill: #F2F5F7; stroke: #B8C4CD; }
+
+.dothelp-svg .dh-t {
+    fill: var(--dh-ink);
+    font-size: 11px;
+    text-anchor: middle;
+    font-family: inherit;
+}
+
+.dothelp-svg .dh-sm  { fill: var(--dh-muted); font-size: 9.5px; }
+.dothelp-svg .dh-lbl { fill: var(--dh-muted); font-size: 9.5px; }
+.dothelp-svg .dh-left{ text-anchor: start; }
+
+.dothelp-svg .dh-arrow {
+    stroke: #9FB0BC;
+    stroke-width: 1.2;
+    fill: none;
+    marker-end: url(#dh-head);
+}
+
+.dothelp-svg .dh-dash { stroke-dasharray: 3 3; }
+
+/* ── Pager ─────────────────────────────────────────────────────── */
+
+.dothelp-pager {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 34px;
+    padding-top: 14px;
+    border-top: 1px solid var(--dh-line);
+    font-size: 13px;
+}
+
+.dothelp-pager-next { text-align: right; }
+
+@media (max-width: 767px) {
+    .dothelp-card { width: calc(100% - 16px); }
+    .dothelp-sidebar { margin-bottom: 20px; }
+}
+
+@media print {
+    .dothelp-sidebar, .dothelp-pager { display: none; }
+    .dothelp-content { max-width: none; }
+}

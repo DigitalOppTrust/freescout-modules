@@ -10,6 +10,7 @@ Custom [FreeScout](https://freescout.net/) modules built and maintained by
 | `DOTTriage` | In development | AI-assisted ticket routing and SLA escalation |
 | `DOTReports` | In development | Volume, triage effectiveness and resolution reporting |
 | `DOTLog` | In development | Per-conversation event log for debugging the mail pipeline |
+| `DOTHelp` | In development | In-app handbook explaining the desk and its modules to new staff |
 
 ### Triage
 
@@ -49,6 +50,24 @@ arrived, what triage did, who was assigned, what mail was actually sent.
 
 See [`DOTLog/README.md`](DOTLog/README.md) for the event reference.
 
+### DOTHelp
+
+An in-app handbook for a support person who has just been given an account:
+what the desk is, how a ticket moves through it, and which of the automatic
+behaviours they are about to notice are deliberate.
+
+- **Reachable from the queue** — `Help` in the main navigation, and under
+  `Manage`. Readable by every logged-in user, because an onboarding guide
+  nobody can open has failed at its one job
+- **Documents what is true, not what was planned** — where a feature is
+  configurable but inert, the handbook says so rather than describing it as
+  working
+- **Read-only by construction** — no tables, no hooks, no scheduled work; two
+  `GET` routes and a set of Blade partials
+
+See [`DOTHelp/README.md`](DOTHelp/README.md) for the topic list and how to add
+a page.
+
 ## Installation
 
 Modules are installed into a FreeScout instance's `Modules/` directory.
@@ -60,6 +79,7 @@ git clone https://github.com/DigitalOppTrust/freescout-modules.git /opt/freescou
 ln -s /opt/freescout-modules/DOTTriage  /path/to/freescout/Modules/DOTTriage
 ln -s /opt/freescout-modules/DOTReports /path/to/freescout/Modules/DOTReports
 ln -s /opt/freescout-modules/DOTLog     /path/to/freescout/Modules/DOTLog
+ln -s /opt/freescout-modules/DOTHelp    /path/to/freescout/Modules/DOTHelp
 cd /path/to/freescout
 php artisan freescout:module-install
 php artisan freescout:clear-cache
@@ -96,6 +116,8 @@ No credentials are stored in this repository.
 | `TRIAGE_DAILY_LIMIT` | `500` | Maximum API calls per day |
 | `DOTLOG_ENABLED` | `true` | DOTLog capture kill switch |
 | `DOTLOG_RETENTION_DAYS` | `21` | DOTLog retention until saved in the UI |
+| `DOTHELP_ENABLED` | `true` | DOTHelp master switch |
+| `DOTHELP_AUDIENCE` | `all` | Who may read the handbook: `all` or `admin` |
 
 ## Requirements
 
