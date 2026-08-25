@@ -4,6 +4,14 @@
     fine if you simply read tickets and answer them.
 </p>
 
+<div class="dothelp-callout dothelp-callout-quiet">
+    <p class="dothelp-callout-last">
+        <strong>In a hurry?</strong> <a href="{{ route('dothelp.topic', 'quick-start') }}">The
+        five-minute version</a> is enough to answer your first ticket safely. This page is the
+        start of the fuller hour.
+    </p>
+</div>
+
 <h3>What this system is</h3>
 
 <p>
@@ -32,6 +40,11 @@
         <strong>Watch before you answer.</strong> Open a few closed tickets and read how
         colleagues replied — tone, length, how much they explain. That is faster than any
         style guide.
+    </li>
+    <li>
+        <strong>Learn the one rule you can get wrong.</strong> Every reply to a customer goes
+        out from inside the ticket — never from your own mailbox, never as a CC. See
+        <a href="{{ route('dothelp.topic', 'replying') }}">Replying to customers</a>.
     </li>
     <li>
         <strong>Take one ticket end to end.</strong> Assign it to yourself, reply, and let it

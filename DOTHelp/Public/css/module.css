@@ -96,6 +96,86 @@
     color: var(--dh-muted);
 }
 
+/* ── Time-boxed routes ─────────────────────────────────────────── */
+
+.dothelp-routes {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -8px 30px;
+}
+
+.dothelp-route {
+    flex: 1 1 300px;
+    margin: 0 8px 16px;
+    padding: 16px 18px 14px;
+    border: 1px solid var(--dh-line);
+    border-top: 3px solid var(--dh-brand);
+    border-radius: 4px;
+    background: #fff;
+}
+
+.dothelp-route-time {
+    display: inline-block;
+    margin-bottom: 6px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    background: var(--dh-brand);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.dothelp-route-title {
+    margin: 4px 0 4px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--dh-ink);
+    border: 0;
+    padding: 0;
+}
+
+.dothelp-route-desc {
+    margin-bottom: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--dh-muted);
+}
+
+.dothelp-route-list {
+    margin: 0 0 10px;
+    padding-left: 20px;
+    font-size: 13.5px;
+    line-height: 1.5;
+}
+
+.dothelp-route-list li { margin-bottom: 4px; }
+
+.dothelp-route-list li span {
+    margin-left: 5px;
+    color: var(--dh-muted);
+    font-size: 11.5px;
+}
+
+.dothelp-route-foot {
+    margin: 0;
+    padding-top: 8px;
+    border-top: 1px solid #EEF2F5;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--dh-muted);
+}
+
+.dothelp-all-heading {
+    margin: 0 0 14px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--dh-line);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--dh-ink);
+}
+
 /* ── Topic page ────────────────────────────────────────────────── */
 
 .dothelp-back {

@@ -140,6 +140,13 @@
     reflects reality — see <a href="{{ route('dothelp.topic', 'folders') }}">Folders and
     statuses</a>.
 </p>
+<p>
+    <strong>Reply from inside the ticket.</strong> That is what makes the message part of this
+    chain at all — it goes out as the desk address, lands on the ticket, and the customer's
+    answer comes back here. Replying from your own mailbox or CCing the customer takes the
+    conversation out of the system entirely, and every step after this one stops working. See
+    <a href="{{ route('dothelp.topic', 'replying') }}">Replying to customers</a>.
+</p>
 
 <h4>5. It closes — often by itself</h4>
 <p>

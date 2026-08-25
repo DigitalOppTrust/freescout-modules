@@ -17,13 +17,34 @@ who needs them can find them without asking.
 
 ## What it contains
 
-Fourteen topics in reading order, from "what is this system" through the
+Sixteen topics in reading order, from "what is this system" through the
 lifecycle of a ticket to a glossary. Four are marked `admin` and describe
 screens an agent cannot open; they are listed for administrators only, but
 nothing in them is needed to work the queue.
 
-The two pages worth reading first are **Start here** and **The life of a
-ticket** — together they cover almost everything needed in week one.
+The index offers **two time-boxed routes**, because someone about to answer
+their first ticket does not have an hour, and pointing them at sixteen pages
+means they read none:
+
+- **5 minutes** — *The five-minute version*: the reply rule, where the queue
+  is, what the automatic notes mean, and the fact that nothing is
+  irreversible. Enough to start safely.
+- **60 minutes** — eight topics in sequence with per-page timings, from
+  *Start here* to *Escalation*. The remaining pages stay as reference.
+
+## The reply rule
+
+The handbook's most emphasised point, repeated across five pages rather than
+stated once: **agents reply from inside the ticket, never from their own
+mailbox and never by CCing the customer.**
+
+It gets that weight because the failure is silent and expensive — an
+off-system reply is invisible to the desk, so the ticket reads as unanswered,
+it is excluded from the closing rules and sits open, the customer's response
+lands in one person's private inbox, and the response-time figures understate
+the whole team. It appears in `quick-start` (first item), `replying` (the full
+page), `start`, `ticket-lifecycle`, `daily-work` and `troubleshooting`, plus
+`Reply` and `Forward` entries in the glossary.
 
 ## What it deliberately does
 
@@ -72,3 +93,5 @@ pages most likely to need updating:
 | Suggest-only vs auto-assign | `triage`, `admin` |
 | Adding or removing a module | `modules`, and the registry |
 | Folder structure | `folders` |
+| Reply/forward mechanics | `replying`, `quick-start`, `glossary` |
+| Adding or reordering topics | the 60-minute route list in `index.blade.php` |

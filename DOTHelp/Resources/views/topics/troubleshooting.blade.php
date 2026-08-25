@@ -27,6 +27,19 @@
     number; the note on the ticket records which category matched.
 </p>
 
+<h3>"This ticket says nobody has replied, but I answered it"</h3>
+<p>
+    Almost always because the reply went out from somewhere other than the ticket — your own
+    mailbox, or a CC on another thread. The desk only knows about messages sent from inside the
+    conversation, so an off-system answer leaves the ticket looking untouched, keeps it out of
+    the closing rules, and makes the reports understate the team.
+</p>
+<p>
+    Paste what you sent in as a note so the record is complete, then continue inside the ticket.
+    <a href="{{ route('dothelp.topic', 'replying') }}">Replying to customers</a> covers the fix
+    and why it matters.
+</p>
+
 <h3>"The customer says they never got my reply"</h3>
 <p>
     This is the one worth escalating with detail, because the answer is usually in the mail

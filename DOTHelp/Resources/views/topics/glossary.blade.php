@@ -12,6 +12,12 @@
     <dt>Note</dt>
     <dd>Internal commentary on a ticket. Permanent, visible to the team, <strong>never sent to the customer</strong>. Everything the automation says, it says in a note.</dd>
 
+    <dt>Reply</dt>
+    <dd>A message sent to the customer from inside the ticket. Goes out as <code>support@dotrust.org</code>, not your own address. The only correct way to answer someone.</dd>
+
+    <dt>Forward</dt>
+    <dd>Sending a ticket's contents to someone outside the desk while keeping their response attached to the ticket. Use it instead of CCing a third party from your own mailbox.</dd>
+
     <dt>Triage</dt>
     <dd>Deciding what an incoming email is and who should handle it. Here, done automatically by the DOTTriage module.</dd>
 

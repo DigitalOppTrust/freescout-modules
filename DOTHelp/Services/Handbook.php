@@ -23,6 +23,12 @@ class Handbook
     public static function topics()
     {
         return [
+            'quick-start' => [
+                'title'    => 'The five-minute version',
+                'summary'  => 'Enough to answer your first ticket safely. Read this if you read nothing else.',
+                'icon'     => 'flash',
+                'audience' => 'all',
+            ],
             'start' => [
                 'title'    => 'Start here',
                 'summary'  => 'What this system is, who is on it, and what to do in your first week.',
@@ -33,6 +39,12 @@ class Handbook
                 'title'    => 'The life of a ticket',
                 'summary'  => 'From the customer pressing send to the conversation closing itself.',
                 'icon'     => 'refresh',
+                'audience' => 'all',
+            ],
+            'replying' => [
+                'title'    => 'Replying to customers',
+                'summary'  => 'Always from inside the ticket — never your own inbox, never a CC.',
+                'icon'     => 'envelope',
                 'audience' => 'all',
             ],
             'folders' => [

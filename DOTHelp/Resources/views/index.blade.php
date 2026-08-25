@@ -18,14 +18,49 @@
             — a shared inbox where customer email becomes tickets — plus a handful of
             our own modules that route, close and measure that mail.
         </p>
-        <p>
-            If you have just been given an account, read
-            <a href="{{ route('dothelp.topic', 'start') }}"><strong>Start here</strong></a>
-            first, then <a href="{{ route('dothelp.topic', 'ticket-lifecycle') }}">The life of
-            a ticket</a>. Those two cover almost everything you need in week one. The rest is
-            reference — read it when a question comes up.
-        </p>
     </div>
+
+    {{-- The two entry points. Someone about to answer their first ticket does not
+         have an hour, and telling them to read fourteen pages means they read none. --}}
+    <div class="dothelp-routes">
+        <div class="dothelp-route">
+            <span class="dothelp-route-time">5 minutes</span>
+            <h3 class="dothelp-route-title">Enough to start safely</h3>
+            <p class="dothelp-route-desc">
+                You are about to answer your first ticket. Read this and nothing else.
+            </p>
+            <ol class="dothelp-route-list">
+                <li><a href="{{ route('dothelp.topic', 'quick-start') }}">The five-minute version</a></li>
+            </ol>
+            <p class="dothelp-route-foot">
+                Covers the one rule you can get wrong, where the queue is, and what the
+                automatic notes on your tickets mean.
+            </p>
+        </div>
+
+        <div class="dothelp-route">
+            <span class="dothelp-route-time">60 minutes</span>
+            <h3 class="dothelp-route-title">The whole desk</h3>
+            <p class="dothelp-route-desc">
+                Read in this order when you have a quiet hour. Each page links to the next.
+            </p>
+            <ol class="dothelp-route-list">
+                <li><a href="{{ route('dothelp.topic', 'start') }}">Start here</a> <span>5 min</span></li>
+                <li><a href="{{ route('dothelp.topic', 'ticket-lifecycle') }}">The life of a ticket</a> <span>10 min</span></li>
+                <li><a href="{{ route('dothelp.topic', 'replying') }}">Replying to customers</a> <span>8 min</span></li>
+                <li><a href="{{ route('dothelp.topic', 'folders') }}">Folders and statuses</a> <span>6 min</span></li>
+                <li><a href="{{ route('dothelp.topic', 'triage') }}">How tickets reach you</a> <span>8 min</span></li>
+                <li><a href="{{ route('dothelp.topic', 'auto-close') }}">Tickets that close themselves</a> <span>8 min</span></li>
+                <li><a href="{{ route('dothelp.topic', 'daily-work') }}">Your daily routine</a> <span>6 min</span></li>
+                <li><a href="{{ route('dothelp.topic', 'escalation') }}">Escalation and SLA clocks</a> <span>5 min</span></li>
+            </ol>
+            <p class="dothelp-route-foot">
+                The remaining pages are reference — read them when a question comes up.
+            </p>
+        </div>
+    </div>
+
+    <h3 class="dothelp-all-heading">All topics</h3>
 
     <div class="dothelp-grid">
         @foreach ($topics as $slug => $topic)

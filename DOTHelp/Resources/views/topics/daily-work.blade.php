@@ -26,6 +26,12 @@
 
 <ul>
     <li>
+        <strong>Reply inside the ticket, always.</strong> Never from your own mailbox and never
+        by CCing the customer — it takes the conversation out of the system and nobody can pick
+        it up after you. See <a href="{{ route('dothelp.topic', 'replying') }}">Replying to
+        customers</a>.
+    </li>
+    <li>
         <strong>Assign it to yourself before you reply.</strong> An unassigned ticket being
         answered is invisible to everyone else, and two people will duplicate the work.
     </li>
