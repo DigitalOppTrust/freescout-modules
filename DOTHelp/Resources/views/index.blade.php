@@ -9,84 +9,67 @@
 @section('content')
 <div class="container dothelp">
 
-    <h2 class="subheader">Help desk handbook</h2>
-
-    <div class="dothelp-lede">
-        <p>
-            This is the DO Trust support desk. It is
-            <a href="https://freescout.net/" target="_blank" rel="noopener">FreeScout</a>
-            — a shared inbox where customer email becomes tickets — plus a handful of
-            our own modules that route, close and measure that mail.
+    <div class="dothelp-hero">
+        <h2 class="dothelp-hero-title">Help desk handbook</h2>
+        <p class="dothelp-hero-sub">
+            How much time do you have?
         </p>
     </div>
 
-    {{-- The two entry points. Someone about to answer their first ticket does not
-         have an hour, and telling them to read fourteen pages means they read none. --}}
-    <div class="dothelp-routes">
-        <div class="dothelp-route">
-            <span class="dothelp-route-time">5 minutes</span>
-            <h3 class="dothelp-route-title">Enough to start safely</h3>
-            <p class="dothelp-route-desc">
-                You are about to answer your first ticket. Read this and nothing else.
-            </p>
-            <ol class="dothelp-route-list">
-                <li><a href="{{ route('dothelp.topic', 'quick-start') }}">The five-minute version</a></li>
-            </ol>
-            <p class="dothelp-route-foot">
-                Covers the one rule you can get wrong, where the queue is, and what the
-                automatic notes on your tickets mean.
-            </p>
-        </div>
+    {{-- One question, two answers. Someone about to answer their first ticket
+         does not have an hour, and a list of sixteen pages gets read as
+         "later" - so the choice is time, and each answer is a single page. --}}
+    <div class="dothelp-choices">
+        @foreach ($courses as $key => $c)
+            <a class="dothelp-choice dothelp-choice-{{ $key }}"
+               href="{{ route('dothelp.course', $key) }}">
 
-        <div class="dothelp-route">
-            <span class="dothelp-route-time">60 minutes</span>
-            <h3 class="dothelp-route-title">The whole desk</h3>
-            <p class="dothelp-route-desc">
-                Read in this order when you have a quiet hour. Each page links to the next.
-            </p>
-            <ol class="dothelp-route-list">
-                <li><a href="{{ route('dothelp.topic', 'start') }}">Start here</a> <span>5 min</span></li>
-                <li><a href="{{ route('dothelp.topic', 'ticket-lifecycle') }}">The life of a ticket</a> <span>10 min</span></li>
-                <li><a href="{{ route('dothelp.topic', 'replying') }}">Replying to customers</a> <span>8 min</span></li>
-                <li><a href="{{ route('dothelp.topic', 'folders') }}">Folders and statuses</a> <span>6 min</span></li>
-                <li><a href="{{ route('dothelp.topic', 'triage') }}">How tickets reach you</a> <span>8 min</span></li>
-                <li><a href="{{ route('dothelp.topic', 'auto-close') }}">Tickets that close themselves</a> <span>8 min</span></li>
-                <li><a href="{{ route('dothelp.topic', 'daily-work') }}">Your daily routine</a> <span>6 min</span></li>
-                <li><a href="{{ route('dothelp.topic', 'escalation') }}">Escalation and SLA clocks</a> <span>5 min</span></li>
-            </ol>
-            <p class="dothelp-route-foot">
-                The remaining pages are reference — read them when a question comes up.
-            </p>
-        </div>
-    </div>
+                <span class="dothelp-choice-num">{{ $c['minutes'] }}</span>
+                <span class="dothelp-choice-unit">minutes</span>
 
-    <h3 class="dothelp-all-heading">All topics</h3>
+                <span class="dothelp-choice-label">{{ $c['label'] }}</span>
+                <span class="dothelp-choice-blurb">{{ $c['blurb'] }}</span>
 
-    <div class="dothelp-grid">
-        @foreach ($topics as $slug => $topic)
-            <a class="dothelp-card" href="{{ route('dothelp.topic', $slug) }}">
-                <span class="dothelp-card-icon">
-                    <i class="glyphicon glyphicon-{{ $topic['icon'] }}"></i>
+                <span class="dothelp-choice-covers">
+                    @foreach ($c['covers'] as $line)
+                        <span class="dothelp-choice-covers-item">{{ $line }}</span>
+                    @endforeach
                 </span>
-                <span class="dothelp-card-body">
-                    <span class="dothelp-card-title">
-                        {{ $topic['title'] }}
-                        @if ($topic['audience'] === 'admin')
-                            <span class="dothelp-tag">admin</span>
-                        @endif
-                    </span>
-                    <span class="dothelp-card-summary">{{ $topic['summary'] }}</span>
-                </span>
+
+                <span class="dothelp-choice-cta">{{ $c['cta'] }} &rarr;</span>
             </a>
         @endforeach
     </div>
 
-    @if (!$isAdmin)
-        <p class="dothelp-note">
-            Some pages of this handbook describe administrator-only screens and are not
-            listed here. Nothing in them is needed to work the queue.
-        </p>
-    @endif
+    <details class="dothelp-browse">
+        <summary>Or browse all {{ count($topics) }} topics</summary>
+
+        <div class="dothelp-grid">
+            @foreach ($topics as $slug => $topic)
+                <a class="dothelp-card" href="{{ route('dothelp.topic', $slug) }}">
+                    <span class="dothelp-card-icon">
+                        <i class="glyphicon glyphicon-{{ $topic['icon'] }}"></i>
+                    </span>
+                    <span class="dothelp-card-body">
+                        <span class="dothelp-card-title">
+                            {{ $topic['title'] }}
+                            @if ($topic['audience'] === 'admin')
+                                <span class="dothelp-tag">admin</span>
+                            @endif
+                        </span>
+                        <span class="dothelp-card-summary">{{ $topic['summary'] }}</span>
+                    </span>
+                </a>
+            @endforeach
+        </div>
+
+        @if (!$isAdmin)
+            <p class="dothelp-note">
+                Some pages describe administrator-only screens and are not listed here.
+                Nothing in them is needed to work the queue.
+            </p>
+        @endif
+    </details>
 
 </div>
 @endsection

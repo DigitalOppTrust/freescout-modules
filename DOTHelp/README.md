@@ -22,15 +22,26 @@ lifecycle of a ticket to a glossary. Four are marked `admin` and describe
 screens an agent cannot open; they are listed for administrators only, but
 nothing in them is needed to work the queue.
 
-The index offers **two time-boxed routes**, because someone about to answer
-their first ticket does not have an hour, and pointing them at sixteen pages
-means they read none:
+The index asks **one question — how much time do you have** — and offers two
+big blocks to choose from. Someone about to answer their first ticket does not
+have an hour, and pointing them at sixteen pages means they read none.
 
-- **5 minutes** — *The five-minute version*: the reply rule, where the queue
-  is, what the automatic notes mean, and the fact that nothing is
-  irreversible. Enough to start safely.
-- **60 minutes** — eight topics in sequence with per-page timings, from
-  *Start here* to *Escalation*. The remaining pages stay as reference.
+| Choice | Goes to | Contains |
+|---|---|---|
+| **5 minutes** | `/dothelp/course/five-minutes` | The reply rule, where the queue is, what the triage notes mean, and that nothing is irreversible |
+| **60 minutes** | `/dothelp/course/one-hour` | Eight topics as one scrollable page with a contents list and per-part progress |
+
+Both land on a **single continuous page**, not a list of links. The hour is
+deliberately one page rather than eight: a reader who has set an hour aside
+should scroll rather than navigate, and should be able to see how far through
+they are. The full topic grid is still there, behind a *Browse all topics*
+disclosure.
+
+Courses are defined in `Handbook::courses()` — a key, a duration, the blurb
+and bullet list shown on the block, and the ordered `parts`. Adding one means
+adding an entry there; the controller and view need no changes. Partials
+receive `$inCourse` so they can hide standalone-only navigation when composed
+into a course.
 
 ## The reply rule
 
@@ -94,4 +105,4 @@ pages most likely to need updating:
 | Adding or removing a module | `modules`, and the registry |
 | Folder structure | `folders` |
 | Reply/forward mechanics | `replying`, `quick-start`, `glossary` |
-| Adding or reordering topics | the 60-minute route list in `index.blade.php` |
+| Adding or reordering topics | `Handbook::courses()` and `Handbook::partMinutes()` |

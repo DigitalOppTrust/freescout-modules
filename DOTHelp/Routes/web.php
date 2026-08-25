@@ -13,6 +13,12 @@
 
 Route::get('/', 'DOTHelpController@index')->name('dothelp.index');
 
+// Declared before the catch-all slug route below, which would otherwise
+// swallow these and 404 them as unknown topics.
+Route::get('/course/{key}', 'DOTHelpController@course')
+    ->where('key', '[a-z0-9-]+')
+    ->name('dothelp.course');
+
 // Constrained to the slug shape the registry uses. The controller checks the
 // registry too; this keeps obvious junk from reaching it at all.
 Route::get('/{slug}', 'DOTHelpController@topic')

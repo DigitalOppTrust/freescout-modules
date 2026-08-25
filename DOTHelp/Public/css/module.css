@@ -96,84 +96,266 @@
     color: var(--dh-muted);
 }
 
-/* ── Time-boxed routes ─────────────────────────────────────────── */
+/* ── The choice: two big blocks ────────────────────────────────── */
 
-.dothelp-routes {
+.dothelp-hero {
+    text-align: center;
+    padding: 6px 0 26px;
+}
+
+.dothelp-hero-title {
+    margin: 0 0 6px;
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--dh-ink);
+}
+
+.dothelp-hero-sub {
+    margin: 0;
+    font-size: 17px;
+    color: var(--dh-muted);
+}
+
+.dothelp-choices {
     display: flex;
     flex-wrap: wrap;
-    margin: 0 -8px 30px;
+    margin: 0 -10px 30px;
 }
 
-.dothelp-route {
-    flex: 1 1 300px;
-    margin: 0 8px 16px;
-    padding: 16px 18px 14px;
-    border: 1px solid var(--dh-line);
-    border-top: 3px solid var(--dh-brand);
-    border-radius: 4px;
+.dothelp-choice {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    flex: 1 1 320px;
+    margin: 0 10px 20px;
+    padding: 30px 26px 26px;
+    border: 2px solid var(--dh-line);
+    border-radius: 6px;
     background: #fff;
+    text-decoration: none;
+    color: var(--dh-ink);
+    transition: border-color .14s, box-shadow .14s, transform .14s;
 }
 
-.dothelp-route-time {
-    display: inline-block;
-    margin-bottom: 6px;
-    padding: 2px 8px;
-    border-radius: 2px;
+.dothelp-choice:hover,
+.dothelp-choice:focus {
+    border-color: var(--dh-brand);
+    box-shadow: 0 4px 16px rgba(33, 50, 61, .12);
+    transform: translateY(-2px);
+    text-decoration: none;
+    color: var(--dh-ink);
+}
+
+.dothelp-choice-num {
+    font-size: 62px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--dh-brand);
+    letter-spacing: -.02em;
+}
+
+.dothelp-choice-unit {
+    margin-top: 2px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--dh-muted);
+}
+
+.dothelp-choice-label {
+    margin-top: 16px;
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--dh-ink);
+}
+
+.dothelp-choice-blurb {
+    margin-top: 6px;
+    max-width: 30em;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--dh-muted);
+}
+
+.dothelp-choice-covers {
+    display: block;
+    width: 100%;
+    margin: 18px 0 0;
+    padding-top: 16px;
+    border-top: 1px solid #EEF2F5;
+    text-align: left;
+}
+
+.dothelp-choice-covers-item {
+    display: block;
+    position: relative;
+    padding-left: 20px;
+    margin-bottom: 7px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--dh-ink);
+}
+
+.dothelp-choice-covers-item:before {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 7px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--dh-brand);
+}
+
+.dothelp-choice-cta {
+    margin-top: 18px;
+    padding: 9px 22px;
+    border-radius: 3px;
     background: var(--dh-brand);
     color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.dothelp-choice:hover .dothelp-choice-cta { background: var(--dh-brand-dark); }
+
+/* The hour is the fuller commitment - mark it without shouting. */
+.dothelp-choice-one-hour { border-color: #C9DCE8; }
+
+/* ── Browse-all disclosure ─────────────────────────────────────── */
+
+.dothelp-browse {
+    margin-top: 6px;
+    padding-top: 18px;
+    border-top: 1px solid var(--dh-line);
+}
+
+.dothelp-browse > summary {
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--dh-brand-dark);
+    outline: none;
+    margin-bottom: 16px;
+}
+
+.dothelp-browse > summary:hover { color: var(--dh-brand); }
+
+/* ── Course page ───────────────────────────────────────────────── */
+
+.dothelp-course-blurb {
+    max-width: 46em;
+    margin-bottom: 20px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--dh-muted);
+}
+
+.dothelp-course-contents {
+    max-width: 46em;
+    margin-bottom: 30px;
+    padding: 14px 18px 10px;
+    border: 1px solid var(--dh-line);
+    border-radius: 4px;
+    background: #FBFCFD;
+}
+
+.dothelp-course-contents-head {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--dh-muted);
+}
+
+.dothelp-course-contents ol {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 13.5px;
+    line-height: 1.6;
+}
+
+.dothelp-course-contents li { margin-bottom: 3px; }
+
+.dothelp-course-contents li span {
+    margin-left: 6px;
+    font-size: 11.5px;
+    color: var(--dh-muted);
+}
+
+.dothelp-part {
+    max-width: 46em;
+    padding-top: 10px;
+    margin-bottom: 42px;
+}
+
+.dothelp-part + .dothelp-part {
+    padding-top: 34px;
+    border-top: 1px solid var(--dh-line);
+}
+
+.dothelp-part-head { margin-bottom: 14px; }
+
+.dothelp-part-num {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 2px;
+    background: var(--dh-brand-light);
+    color: var(--dh-brand-dark);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: .04em;
     text-transform: uppercase;
 }
 
-.dothelp-route-title {
-    margin: 4px 0 4px;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--dh-ink);
-    border: 0;
-    padding: 0;
-}
-
-.dothelp-route-desc {
-    margin-bottom: 10px;
-    font-size: 13px;
-    line-height: 1.5;
-    color: var(--dh-muted);
-}
-
-.dothelp-route-list {
-    margin: 0 0 10px;
-    padding-left: 20px;
-    font-size: 13.5px;
-    line-height: 1.5;
-}
-
-.dothelp-route-list li { margin-bottom: 4px; }
-
-.dothelp-route-list li span {
-    margin-left: 5px;
-    color: var(--dh-muted);
-    font-size: 11.5px;
-}
-
-.dothelp-route-foot {
-    margin: 0;
-    padding-top: 8px;
-    border-top: 1px solid #EEF2F5;
+.dothelp-part-time {
+    margin-left: 8px;
     font-size: 12px;
-    line-height: 1.5;
     color: var(--dh-muted);
 }
 
-.dothelp-all-heading {
-    margin: 0 0 14px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid var(--dh-line);
-    font-size: 15px;
+.dothelp-part-title {
+    margin: 8px 0 0;
+    padding: 0;
+    border: 0;
+    font-size: 22px;
     font-weight: 600;
     color: var(--dh-ink);
+}
+
+/* Inside a course the partial's own first heading follows the part title,
+   so it must not also look like a page heading. */
+.dothelp-part-body > h3:first-child { margin-top: 14px; }
+
+.dothelp-course-end {
+    max-width: 46em;
+    margin-top: 10px;
+    padding: 18px 20px;
+    border: 1px solid var(--dh-line);
+    border-left: 3px solid var(--dh-brand);
+    border-radius: 0 4px 4px 0;
+    background: #FBFCFD;
+}
+
+.dothelp-course-end h3 {
+    margin: 0 0 8px;
+    padding: 0;
+    border: 0;
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.dothelp-course-end p { font-size: 14px; line-height: 1.6; margin-bottom: 8px; }
+.dothelp-course-end-back { margin-bottom: 0 !important; font-size: 13px !important; }
+
+@media (max-width: 767px) {
+    .dothelp-choice { flex-basis: 100%; padding: 24px 20px; }
+    .dothelp-choice-num { font-size: 50px; }
+    .dothelp-hero-title { font-size: 22px; }
 }
 
 /* ── Topic page ────────────────────────────────────────────────── */

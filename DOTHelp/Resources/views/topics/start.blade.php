@@ -4,13 +4,15 @@
     fine if you simply read tickets and answer them.
 </p>
 
+@unless (isset($inCourse) && $inCourse)
 <div class="dothelp-callout dothelp-callout-quiet">
     <p class="dothelp-callout-last">
-        <strong>In a hurry?</strong> <a href="{{ route('dothelp.topic', 'quick-start') }}">The
+        <strong>In a hurry?</strong> <a href="{{ route('dothelp.course', 'five-minutes') }}">The
         five-minute version</a> is enough to answer your first ticket safely. This page is the
         start of the fuller hour.
     </p>
 </div>
+@endunless
 
 <h3>What this system is</h3>
 
@@ -92,6 +94,7 @@
     which is fine, it is here so you know the capability exists and who to ask.
 </p>
 
+@unless (isset($inCourse) && $inCourse)
 <h3>Where to go next</h3>
 
 <p>
@@ -100,3 +103,4 @@
     <a href="{{ route('dothelp.topic', 'daily-work') }}">Your daily routine</a> is a practical
     checklist you can keep open for a week.
 </p>
+@endunless

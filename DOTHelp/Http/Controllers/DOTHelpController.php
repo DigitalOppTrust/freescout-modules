@@ -30,8 +30,45 @@ class DOTHelpController extends Controller
         $isAdmin = auth()->user() && auth()->user()->isAdmin();
 
         return view('dothelp::index', [
+            'courses' => Handbook::courses(),
             'topics'  => Handbook::forAudience($isAdmin),
             'all'     => Handbook::topics(),
+            'isAdmin' => $isAdmin,
+        ]);
+    }
+
+    /**
+     * A time-boxed reading route rendered as one continuous page.
+     *
+     * The hour is deliberately not eight separate pages: someone who has set
+     * an hour aside should scroll through it and be able to see how far they
+     * have got, rather than navigating and losing their place.
+     */
+    public function course($key)
+    {
+        if (!Handbook::hasCourse($key)) {
+            abort(404);
+        }
+
+        $course  = Handbook::course($key);
+        $isAdmin = auth()->user() && auth()->user()->isAdmin();
+
+        // Courses are built from agent-readable topics only, so there is no
+        // audience check to make here - but assert it rather than assume it,
+        // so a future edit to courses() cannot quietly leak an admin page.
+        $parts = [];
+        foreach ($course['parts'] as $slug) {
+            $topic = Handbook::get($slug);
+            if (!$topic || $topic['audience'] === 'admin') {
+                continue;
+            }
+            $parts[] = $topic;
+        }
+
+        return view('dothelp::course', [
+            'course'  => $course,
+            'parts'   => $parts,
+            'minutes' => Handbook::partMinutes(),
             'isAdmin' => $isAdmin,
         ]);
     }

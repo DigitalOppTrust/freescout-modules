@@ -26,7 +26,7 @@
         </div>
 
         <div class="col-md-9 dothelp-content">
-            @include('dothelp::topics.'.$topic['slug'])
+            @include('dothelp::topics.'.$topic['slug'], ['inCourse' => false])
 
             <div class="dothelp-pager">
                 <span>

@@ -108,10 +108,11 @@
     </p>
 </div>
 
+@unless (isset($inCourse) && $inCourse)
 <h3>That is the five minutes</h3>
 
 <p>
-    Go and answer a ticket. When you have a quiet hour, come back and take the
-    <a href="{{ route('dothelp.index') }}">60-minute route</a> from the handbook index — start
-    with <a href="{{ route('dothelp.topic', 'start') }}">Start here</a>.
+    Go and answer a ticket. When you have a quiet hour, come back for
+    <a href="{{ route('dothelp.course', 'one-hour') }}">the full version</a>.
 </p>
+@endunless

@@ -122,6 +122,86 @@ class Handbook
         ];
     }
 
+    /**
+     * The two ways in, chosen by how long the reader actually has.
+     *
+     * Someone about to answer their first ticket does not have an hour, and a
+     * list of sixteen pages gets read as "later". So the index asks one
+     * question - how much time - and each answer leads to a single page that
+     * is complete in itself.
+     *
+     * The hour is deliberately ONE page rather than eight links: a reader who
+     * has set an hour aside should scroll, not navigate, and should be able to
+     * see how far through they are.
+     */
+    public static function courses()
+    {
+        return [
+            'five-minutes' => [
+                'minutes' => 5,
+                'label'   => 'I have five minutes',
+                'blurb'   => 'Enough to answer your first ticket without causing a problem.',
+                'covers'  => [
+                    'The one rule you can get wrong',
+                    'Where the queue is',
+                    'What the automatic notes mean',
+                    'Why nothing you do is irreversible',
+                ],
+                'cta'     => 'Start the five minutes',
+                // Renders the quick-start topic on its own.
+                'parts'   => ['quick-start'],
+            ],
+            'one-hour' => [
+                'minutes' => 60,
+                'label'   => 'I have an hour',
+                'blurb'   => 'The whole desk, in reading order, as one page you scroll through.',
+                'covers'  => [
+                    'Everything in the five-minute version',
+                    'How a ticket moves from arrival to closing',
+                    'Routing, escalation and the automatic closing rules',
+                    'How to work the queue well',
+                ],
+                'cta'     => 'Start the hour',
+                'parts'   => [
+                    'start', 'ticket-lifecycle', 'replying', 'folders',
+                    'triage', 'auto-close', 'daily-work', 'escalation',
+                ],
+            ],
+        ];
+    }
+
+    public static function hasCourse($key)
+    {
+        return array_key_exists((string) $key, self::courses());
+    }
+
+    public static function course($key)
+    {
+        $courses = self::courses();
+
+        return isset($courses[$key]) ? $courses[$key] + ['key' => $key] : null;
+    }
+
+    /**
+     * Per-part reading estimates for the hour, so the reader can see where
+     * they are. Rough by design - a minute either way does not matter, and a
+     * false precision would.
+     */
+    public static function partMinutes()
+    {
+        return [
+            'quick-start'      => 5,
+            'start'            => 5,
+            'ticket-lifecycle' => 10,
+            'replying'         => 8,
+            'folders'          => 6,
+            'triage'           => 8,
+            'auto-close'       => 8,
+            'daily-work'       => 6,
+            'escalation'       => 5,
+        ];
+    }
+
     /** Does this slug name a real topic? Guards the route against path tricks. */
     public static function has($slug)
     {
