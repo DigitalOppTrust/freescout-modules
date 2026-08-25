@@ -125,13 +125,13 @@ class Handbook
     /**
      * The two ways in, chosen by how long the reader actually has.
      *
-     * Someone about to answer their first ticket does not have an hour, and a
+     * Someone about to answer their first ticket does not have half an hour, and a
      * list of sixteen pages gets read as "later". So the index asks one
      * question - how much time - and each answer leads to a single page that
      * is complete in itself.
      *
      * The hour is deliberately ONE page rather than eight links: a reader who
-     * has set an hour aside should scroll, not navigate, and should be able to
+     * has set time aside should scroll, not navigate, and should be able to
      * see how far through they are.
      */
     public static function courses()
@@ -152,8 +152,8 @@ class Handbook
                 'parts'   => ['quick-start'],
             ],
             'one-hour' => [
-                'minutes' => 60,
-                'label'   => 'I have an hour',
+                'minutes' => 35,
+                'label'   => 'I have half an hour',
                 'blurb'   => 'The whole desk, in reading order, as one page you scroll through.',
                 'covers'  => [
                     'Everything in the five-minute version',
@@ -161,7 +161,7 @@ class Handbook
                     'Routing, escalation and the automatic closing rules',
                     'How to work the queue well',
                 ],
-                'cta'     => 'Start the hour',
+                'cta'     => 'Start the walkthrough',
                 'parts'   => [
                     'start', 'ticket-lifecycle', 'replying', 'folders',
                     'triage', 'auto-close', 'daily-work', 'escalation',
@@ -183,22 +183,27 @@ class Handbook
     }
 
     /**
-     * Per-part reading estimates for the hour, so the reader can see where
+     * Per-part reading estimates for the longer route, so the reader can see where
      * they are. Rough by design - a minute either way does not matter, and a
      * false precision would.
      */
     public static function partMinutes()
     {
+        // Measured from word count at a deliberately unhurried pace, rounded
+        // up, with slack for the tables and the diagram. Overstating these
+        // would be the easy mistake: a reader who is told "an hour" and
+        // finishes in twenty minutes stops trusting the other numbers on the
+        // page, and one who only has twenty minutes never starts.
         return [
-            'quick-start'      => 5,
-            'start'            => 5,
-            'ticket-lifecycle' => 10,
-            'replying'         => 8,
-            'folders'          => 6,
-            'triage'           => 8,
-            'auto-close'       => 8,
-            'daily-work'       => 6,
-            'escalation'       => 5,
+            'quick-start'      => 4,
+            'start'            => 4,
+            'ticket-lifecycle' => 6,
+            'replying'         => 5,
+            'folders'          => 3,
+            'triage'           => 5,
+            'auto-close'       => 5,
+            'daily-work'       => 3,
+            'escalation'       => 3,
         ];
     }
 

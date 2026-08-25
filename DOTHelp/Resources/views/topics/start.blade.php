@@ -9,7 +9,7 @@
     <p class="dothelp-callout-last">
         <strong>In a hurry?</strong> <a href="{{ route('dothelp.course', 'five-minutes') }}">The
         five-minute version</a> is enough to answer your first ticket safely. This page is the
-        start of the fuller hour.
+        start of the fuller walkthrough.
     </p>
 </div>
 @endunless

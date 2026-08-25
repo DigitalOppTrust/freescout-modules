@@ -53,12 +53,12 @@
         @if ($course['key'] === 'five-minutes')
             <h3>That is the five minutes</h3>
             <p>
-                Go and answer a ticket. When you have a quiet hour, come back for
+                Go and answer a ticket. When you have half an hour, come back for
                 <a href="{{ route('dothelp.course', 'one-hour') }}">the full version</a> —
                 it covers routing, the closing rules and how to work the queue well.
             </p>
         @else
-            <h3>That is the hour</h3>
+            <h3>That is the walkthrough</h3>
             <p>
                 Everything else in the handbook is reference — read it when a question comes
                 up rather than in advance. The pages worth knowing exist:

@@ -29,7 +29,14 @@ have an hour, and pointing them at sixteen pages means they read none.
 | Choice | Goes to | Contains |
 |---|---|---|
 | **5 minutes** | `/dothelp/course/five-minutes` | The reply rule, where the queue is, what the triage notes mean, and that nothing is irreversible |
-| **60 minutes** | `/dothelp/course/one-hour` | Eight topics as one scrollable page with a contents list and per-part progress |
+| **35 minutes** | `/dothelp/course/one-hour` | Eight topics as one scrollable page with a contents list and per-part progress |
+
+The durations are measured from word count at an unhurried pace, rounded up
+with slack for tables and the diagram — not aspirational. Overstating them is
+the easy mistake: a reader told "an hour" who finishes in twenty minutes stops
+trusting the other numbers on the page, and one who only has twenty minutes
+never starts. If you add or expand a topic, re-check `Handbook::partMinutes()`
+against it.
 
 Both land on a **single continuous page**, not a list of links. The hour is
 deliberately one page rather than eight: a reader who has set an hour aside

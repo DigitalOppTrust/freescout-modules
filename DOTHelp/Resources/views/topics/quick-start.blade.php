@@ -112,7 +112,7 @@
 <h3>That is the five minutes</h3>
 
 <p>
-    Go and answer a ticket. When you have a quiet hour, come back for
+    Go and answer a ticket. When you have half an hour, come back for
     <a href="{{ route('dothelp.course', 'one-hour') }}">the full version</a>.
 </p>
 @endunless
