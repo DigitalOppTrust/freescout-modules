@@ -1,0 +1,5 @@
+This module has no public assets, but the directory must exist.
+
+FreeScout creates a symlink from public/modules/<alias> to this directory when
+the module is installed. Git does not track empty directories, so without a
+real file here the symlink dangles after a fresh clone.

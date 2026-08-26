@@ -391,6 +391,20 @@ class AutoCloser
 
         $conversation->mailbox->updateFoldersCounters();
 
+        // Announce the close for other modules. Assigning status directly
+        // skips changeStatus(), so core's conversation.status_changed never
+        // fires here - anything that needs to know a ticket closed has no
+        // other signal to listen for.
+        //
+        // $reason matters to listeners: DOTRatings emails the customer for
+        // inactivity and resolved closes, but never for noise.
+        try {
+            \Eventy::action('dottriage.auto_closed', $conversation, $reason, $explanation);
+        } catch (\Throwable $e) {
+            \Log::warning('[Triage] auto_closed listeners failed on '
+                .$conversation->id.': '.$e->getMessage());
+        }
+
         \Log::info('[Triage] auto-closed conversation '.$conversation->id.' ('.$reason.')');
     }
 
