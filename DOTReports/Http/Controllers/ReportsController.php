@@ -278,6 +278,11 @@ class ReportsController extends Controller
                     ['Timed successfully', $res['timed']],
                     ['Needed line-item fallback', $res['from_fallback']],
                     ['No usable close timestamp', $res['untimed']],
+                    ['Closed automatically by Triage (excluded)', $res['auto_closed']],
+                    ['  of which not support requests', $res['auto_reasons']['noise']],
+                    ['  of which customer went quiet', $res['auto_reasons']['inactivity']],
+                    ['  of which judged resolved', $res['auto_reasons']['resolved']],
+                    ['Median including automatic closes (min)', self::r($res['all_median'])],
                 ];
 
             default:

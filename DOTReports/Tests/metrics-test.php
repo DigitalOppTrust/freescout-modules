@@ -138,6 +138,11 @@ $s->create('triage_decisions', function ($t) {
     $t->integer('overridden_to_user_id')->nullable();
     $t->timestamp('overridden_at')->nullable();
     $t->text('error')->nullable();
+    $t->string('noise_category', 20)->nullable();
+    $t->boolean('closed')->default(0);
+    $t->string('close_reason', 20)->nullable();
+    $t->integer('reopened_by_user_id')->nullable();
+    $t->timestamp('reopened_at')->nullable();
     $t->timestamps();
 });
 
@@ -239,6 +244,36 @@ thread(8, 1, "$tue 09:00:00");
 thread(8, 4, "$tue 10:00:00", ['action_type' => 1, 'status' => 3]);  // closed
 thread(8, 4, "$tue 11:00:00", ['action_type' => 1, 'status' => 1]);  // reopened
 
+// C9: THE OPPOSITE TRAP - an auto-reply Triage closed 20 seconds after it
+//     arrived. closed_at is stamped, closed_by_user_id is not. It must NOT
+//     enter the resolution median (which it would drag to ~2 min), but must
+//     be counted and reported as an automatic close.
+conv(9, "$mon 09:00:00", [
+    'status'    => 3,
+    'closed_at' => "$mon 09:00:20",
+]);
+thread(9, 1, "$mon 09:00:00");
+thread(9, 3, "$mon 09:00:20", ['body' => 'Closed automatically — Auto-reply.']);
+
+// C10: swept closed for inactivity 3 days later, again with no user. Also
+//      excluded from the headline, but reported under a different reason.
+conv(10, "$mon 09:00:00", [
+    'status'    => 3,
+    'closed_at' => '2026-08-06 09:00:00',
+]);
+thread(10, 1, "$mon 09:00:00");
+thread(10, 2, "$mon 09:10:00", ['created_by_user_id' => 2]);
+
+// C11: Triage closed it as noise, Ann reopened and closed it herself at
+//      Mon 13:00. closed_by_user_id is set, so it is hers: 240 min.
+conv(11, "$mon 09:00:00", [
+    'status'            => 3,
+    'closed_at'         => "$mon 13:00:00",
+    'closed_by_user_id' => 1,
+]);
+thread(11, 1, "$mon 09:00:00");
+thread(11, 2, "$mon 12:00:00", ['created_by_user_id' => 1]);
+
 // Triage decisions: 4 applied (1 overridden), 1 suggestion, 1 error.
 $dec = function ($conv, $opts) use ($mon) {
     Capsule::table('triage_decisions')->insert(array_merge([
@@ -262,6 +297,19 @@ $dec(4, ['suggested_user_id' => 1, 'confidence' => 0.55,
          'overridden_by_user_id' => 2, 'overridden_to_user_id' => 2,
          'overridden_at' => "$mon 10:00:00"]);
 $dec(8, ['suggested_user_id' => 2, 'confidence' => 0.60, 'applied' => 0]);
+
+// Automatic closes. C9's is the arrival-time noise close (method headers,
+// created by TriageConversation); C10's the inactivity sweep; C11's was a
+// noise close that Ann overturned. C10 has an earlier routing decision too,
+// so the report must pick the latest CLOSED row, not any row.
+$dec(9,  ['method' => 'headers', 'applied' => 0, 'closed' => 1, 'close_reason' => 'noise',
+          'noise_category' => 'auto_reply', 'created_at' => "$mon 09:00:20"]);
+$dec(10, ['suggested_user_id' => null, 'confidence' => null, 'applied' => 0]);  // routed nobody
+$dec(10, ['method' => 'headers', 'applied' => 0, 'closed' => 1, 'close_reason' => 'inactivity',
+          'created_at' => '2026-08-06 09:00:00']);
+$dec(11, ['method' => 'headers', 'applied' => 0, 'closed' => 1, 'close_reason' => 'noise',
+          'noise_category' => 'auto_reply', 'reopened_by_user_id' => 1,
+          'reopened_at' => "$mon 12:00:00"]);
 $dec(5, ['suggested_user_id' => null, 'applied' => 0, 'error' => 'API timeout',
          'method' => 'model']);
 
@@ -307,30 +355,41 @@ function check($label, $actual, $expected) {
 
 echo "\nVOLUME\n";
 $v = new VolumeReport($range, 1);
-// C1,C2,C3,C4,C8 = 5. Excludes spam(C5), deleted(C6), imported(C7).
-check('received excludes spam/deleted/imported', $v->received(), 5);
-// C1,C2,C3,C4,C8 have customer threads. C5 is spam - its thread must NOT count.
-check('inbound messages exclude spam conversation', $v->inboundMessages(), 5);
-// C1 and C2 only. C4's is a note; C5's reply is on a spam conversation.
-check('outbound replies exclude notes and spam', $v->outboundReplies(), 2);
+// C1,C2,C3,C4,C8,C9,C10,C11 = 8. Excludes spam(C5), deleted(C6), imported(C7).
+check('received excludes spam/deleted/imported', $v->received(), 8);
+// C1,C2,C3,C4,C8,C9,C10,C11 have customer threads. C5 is spam - its thread must NOT count.
+check('inbound messages exclude spam conversation', $v->inboundMessages(), 8);
+// C1, C2, C10, C11. C4's is a note; C5's reply is on a spam conversation.
+check('outbound replies exclude notes and spam', $v->outboundReplies(), 4);
 
 echo "\nRESOLUTION — the closed_at trap\n";
 $r = new ResolutionReport($range, 1);
 $res = $r->resolutionTimes();
 
-check('closed conversations counted', $res['closed_total'], 3);
-check('timed successfully (C1 + C2)', $res['timed'], 2);
+check('closed conversations counted (incl. automatic)', $res['closed_total'], 6);
+check('timed successfully (C1 + C2 + C11)', $res['timed'], 3);
 check('C2 needed the line-item fallback', $res['from_fallback'], 1);
 check('C3 untimeable and reported', $res['untimed'], 1);
-// C1 = 120 min, C2 = 180 min -> median 150
-check('median resolution = 150 min', (int) $res['elapsed']['median'], 150);
+// C1 = 120 min, C2 = 180 min, C11 = 240 min -> median 180. C9 (20 s) and
+// C10 (3 days) are Triage's closes and must not be in here.
+check('median resolution = 180 min, automatic closes excluded', (int) $res['elapsed']['median'], 180);
+
+echo "\nRESOLUTION — the automatic-close trap\n";
+check('C9 + C10 reported as automatic closes', $res['auto_closed'], 2);
+check('C9 was a noise close', $res['auto_reasons']['noise'], 1);
+check('C10 was an inactivity close (latest closed row wins)', $res['auto_reasons']['inactivity'], 1);
+check('C11 is Ann\'s, not Triage\'s, despite the decision row', $res['auto_reasons']['resolved'], 0);
+check('automatic closes timed separately', $res['auto_elapsed']['count'], 2);
+check('fastest automatic close = 20 s', round($res['auto_elapsed']['min'], 2), 0.33);
+// 0.33, 120, 180, 240, 4320 -> the figure the page used to show as "the" median.
+check('combined median (what the old page showed) = 180', (int) $res['all_median'], 180);
 
 echo "\nFIRST RESPONSE — notes must not count\n";
 $frt = $r->firstResponseTimes();
-// Only C1 (60) and C2 (30) have real agent replies. C4 has only a NOTE.
-check('answered count excludes note-only C4', $frt['answered'], 2);
+// C1 (60), C2 (30), C10 (10), C11 (180) have real agent replies. C4 has only a NOTE.
+check('answered count excludes note-only C4', $frt['answered'], 4);
 check('median FRT = 45 min', (int) $frt['elapsed']['median'], 45);
-check('unanswered = 3', $frt['unanswered'], 3);
+check('unanswered = 4', $frt['unanswered'], 4);
 
 echo "\nREOPENED\n";
 check('C8 detected as reopened', $r->reopened()['count'], 1);
@@ -338,7 +397,7 @@ check('C8 detected as reopened', $r->reopened()['count'], 1);
 echo "\nTRIAGE\n";
 $t = new TriageReport($range, 1);
 $f = $t->funnel();
-check('triaged total', $f['triaged'], 6);
+check('triaged total', $f['triaged'], 10);
 check('auto-applied', $f['applied'], 4);
 check('errors surfaced', $f['errors'], 1);
 $acc = $t->accuracy();
@@ -361,9 +420,34 @@ $team = new TeamReport($range, 1);
 $agents = $team->agents();
 $ann = null;
 foreach ($agents as $a) { if ($a['user_id'] == 1) { $ann = $a; } }
-check('Ann sent 2 replies', $ann['replies'], 2);
-check('Ann resolved 1 (only C1 has closed_by_user_id)', $ann['resolved'], 1);
-check('unattributed closures reported', $team->unattributedClosures(), 0);
+check('Ann sent 3 replies', $ann['replies'], 3);
+check('Ann resolved 2 (C1 and C11 carry her closed_by_user_id)', $ann['resolved'], 2);
+check('unattributed closures = the 2 automatic ones', $team->unattributedClosures(), 2);
+
+echo "\nPERIOD PICKER — a preset must beat stale From/To inputs\n";
+class FakeRequest {
+    private $q;
+    public function __construct($q) { $this->q = $q; }
+    public function get($k, $d = null) { return $this->q[$k] ?? $d; }
+}
+$today = \Carbon\Carbon::now()->toDateString();
+$stale = ['from' => '2026-07-29', 'to' => '2026-08-27'];
+
+$dr = DateRange::fromRequest(new FakeRequest(['period' => 'today'] + $stale));
+check('period=today wins over pre-filled dates', [$dr->preset, $dr->start->toDateString()], ['today', $today]);
+
+$dr = DateRange::fromRequest(new FakeRequest(['period' => 'custom'] + $stale));
+check('period=custom applies the dates', [$dr->preset, $dr->start->toDateString(), $dr->end->toDateString()],
+      ['custom', '2026-07-29', '2026-08-27']);
+
+$dr = DateRange::fromRequest(new FakeRequest($stale));
+check('no period at all applies the dates', $dr->preset, 'custom');
+
+$dr = DateRange::fromRequest(new FakeRequest(['period' => 'bogus']));
+check('unknown period falls back to the default', [$dr->preset, $dr->days()], ['30', 30]);
+
+$dr = DateRange::fromRequest(new FakeRequest(['period' => '7', 'from' => '', 'to' => '']));
+check('preset with cleared dates (the JS path)', [$dr->preset, $dr->days()], ['7', 7]);
 
 echo "\n".str_repeat('─', 50)."\n";
 echo $fail ? "FAILED: $fail assertion(s), $pass passed\n"

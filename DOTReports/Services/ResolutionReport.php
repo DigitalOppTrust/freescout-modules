@@ -44,6 +44,18 @@ use Modules\DOTTriage\Services\BusinessTime;
  *      could actually time. A metric that hides its own blind spot is worse
  *      than no metric, because it gets trusted.
  *
+ * A SECOND, OPPOSITE TRAP: automatic closes.
+ *
+ * DOTTriage closes conversations itself - at arrival when a message is not
+ * a support request (auto-replies, bounces, newsletters), and later by
+ * sweep when a customer goes quiet or the thread appears resolved. Those
+ * closes stamp closed_at, so the naive query counts them, and the arrival
+ * ones resolve in seconds. A mailbox where most mail is noise then reports
+ * a "median resolution time" of under a minute - a figure that describes
+ * the filter, not the team. Automatic closes have closed_by_user_id NULL
+ * and a triage_decisions row with closed = 1, so they are split out and
+ * reported separately rather than mixed into the headline.
+ *
  * Similarly, conversations.last_reply_at is NOT used anywhere here. Its
  * meaning changes with the app.waiting_since_as_first_unanswered_customer_message
  * config flag, and last_customer_reply_at is documented as unindexed. Both are
@@ -67,7 +79,8 @@ class ResolutionReport
      * out per the fallback chain above.
      *
      * Returns one row per conversation with:
-     *   id, created_at, closed_at, lineitem_closed_at, status
+     *   id, created_at, closed_at, closed_by_user_id, lineitem_closed_at,
+     *   status, auto_close_reason
      */
     protected function resolvedRows()
     {
@@ -97,9 +110,28 @@ class ResolutionReport
                 'conversations.id',
                 'conversations.created_at',
                 'conversations.closed_at',
+                'conversations.closed_by_user_id',
                 'conversations.status',
                 'li.lineitem_closed_at',
             ]);
+
+        // The most recent automatic close recorded by Triage, if any. Two
+        // steps because the reason lives on the row, and the newest row is
+        // the one that describes the current closed state.
+        if ($this->triageTablesExist()) {
+            $q->leftJoin(DB::raw(
+                '(SELECT conversation_id, MAX(id) as id
+                    FROM triage_decisions
+                   WHERE closed = 1
+                   GROUP BY conversation_id) as ac'
+            ), 'ac.conversation_id', '=', 'conversations.id')
+              ->leftJoin('triage_decisions as acd', 'acd.id', '=', 'ac.id')
+              ->addSelect('ac.id as auto_close_id')
+              ->addSelect('acd.close_reason as auto_close_reason');
+        } else {
+            $q->addSelect(DB::raw('NULL as auto_close_id'))
+              ->addSelect(DB::raw('NULL as auto_close_reason'));
+        }
 
         if ($this->mailboxId) {
             $q->where('conversations.mailbox_id', $this->mailboxId);
@@ -108,17 +140,68 @@ class ResolutionReport
         return $q->get();
     }
 
+    protected function triageTablesExist()
+    {
+        static $exists = null;
+
+        if ($exists === null) {
+            $exists = \Schema::hasTable('triage_decisions');
+        }
+
+        return $exists;
+    }
+
+    /**
+     * Whether a closed row was closed by Triage rather than a person.
+     *
+     * Both conditions matter: a conversation Triage closed and a person
+     * later reopened and closed again carries closed_by_user_id, and is
+     * theirs. A decision row alone is not enough for the same reason.
+     */
+    protected function isAutoClosed($row)
+    {
+        return !$row->closed_by_user_id && !empty($row->auto_close_id);
+    }
+
+    /**
+     * Collapse Triage's close reasons into the three that matter to a
+     * reader. Rows from before close_reason existed were all noise closes,
+     * the only kind Triage did then.
+     */
+    protected function autoCloseKind($reason)
+    {
+        switch ($reason) {
+            case 'inactivity':
+                return 'inactivity';
+            case 'resolved':
+                return 'resolved';
+            default:
+                return 'noise';
+        }
+    }
+
     /**
      * Resolution durations, in minutes, plus the coverage figures that must
      * be displayed alongside them.
      *
+     * The headline covers conversations a person closed. Conversations
+     * Triage closed on its own are counted, timed and returned separately:
+     * a bounce closed two seconds after arrival was never resolved by
+     * anyone, and letting it into the median makes the team look faster
+     * than they are.
+     *
      * @return array {
-     *   elapsed: Stats summary in wall-clock minutes,
-     *   working: Stats summary in business minutes,
-     *   closed_total: closed conversations in the period,
-     *   timed: how many of those we could actually time,
-     *   from_fallback: how many needed the line-item fallback,
-     *   untimed: closed conversations with no usable timestamp at all
+     *   elapsed: Stats summary in wall-clock minutes (team closes only),
+     *   working: Stats summary in business minutes (team closes only),
+     *   closed_total: closed conversations in the period, all kinds,
+     *   timed: how many team closes we could actually time,
+     *   from_fallback: how many of those needed the line-item fallback,
+     *   untimed: team closes with no usable timestamp at all,
+     *   auto_closed: closed by Triage, excluded from the figures above,
+     *   auto_reasons: auto_closed broken down as noise/inactivity/resolved,
+     *   auto_elapsed: Stats summary over the automatic closes,
+     *   all_median: median over team AND automatic closes together, so the
+     *               page can say what including them would have shown
      * }
      */
     public function resolutionTimes()
@@ -127,9 +210,12 @@ class ResolutionReport
 
         $elapsed      = [];
         $working      = [];
+        $autoElapsed  = [];
         $closedTotal  = 0;
         $fromFallback = 0;
         $untimed      = 0;
+        $autoClosed   = 0;
+        $autoReasons  = ['noise' => 0, 'inactivity' => 0, 'resolved' => 0];
 
         foreach ($rows as $row) {
             if ((int) $row->status !== \App\Conversation::STATUS_CLOSED) {
@@ -138,21 +224,31 @@ class ResolutionReport
 
             $closedTotal++;
 
+            $auto = $this->isAutoClosed($row);
+
+            if ($auto) {
+                $autoClosed++;
+                $autoReasons[$this->autoCloseKind($row->auto_close_reason)]++;
+            }
+
             $resolvedAt = $row->closed_at;
 
             if (!$resolvedAt) {
                 // Trap 1 fallback: the status-change line item.
                 $resolvedAt = $row->lineitem_closed_at;
 
-                if ($resolvedAt) {
+                if ($resolvedAt && !$auto) {
                     $fromFallback++;
                 }
             }
 
             if (!$resolvedAt) {
                 // Closed, but genuinely no usable timestamp. Counted and
-                // surfaced rather than quietly dropped.
-                $untimed++;
+                // surfaced rather than quietly dropped. (Triage always
+                // stamps closed_at, so this is only ever a team close.)
+                if (!$auto) {
+                    $untimed++;
+                }
                 continue;
             }
 
@@ -164,7 +260,14 @@ class ResolutionReport
             $mins = ($end->getTimestamp() - $start->getTimestamp()) / 60;
 
             if ($mins < 0) {
-                $untimed++;
+                if (!$auto) {
+                    $untimed++;
+                }
+                continue;
+            }
+
+            if ($auto) {
+                $autoElapsed[] = $mins;
                 continue;
             }
 
@@ -179,6 +282,10 @@ class ResolutionReport
             'timed'         => count($elapsed),
             'from_fallback' => $fromFallback,
             'untimed'       => $untimed,
+            'auto_closed'   => $autoClosed,
+            'auto_reasons'  => $autoReasons,
+            'auto_elapsed'  => Stats::summarise($autoElapsed),
+            'all_median'    => Stats::percentile(array_merge($elapsed, $autoElapsed), 0.5),
         ];
     }
 

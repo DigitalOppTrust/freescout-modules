@@ -30,6 +30,15 @@ conversations it could actually time. The rows that go missing are not a random
 sample — automated closes are the fast ones — so a median that hid its own gap
 would skew slow and be trusted anyway.
 
+**Automatic closes are kept out of the resolution median.** DOTTriage closes
+conversations itself — at arrival when a message is not a support request
+(auto-replies, bounces, newsletters), and later by sweep when the customer goes
+quiet. Those closes stamp `closed_at` but not `closed_by_user_id`, and the
+arrival ones take seconds, so a mailbox where most mail is noise would otherwise
+report a "median resolution time" of under a minute — a figure describing the
+filter, not the team. The headline covers conversations a person closed; the
+automatic ones are counted and shown alongside it, broken down by reason.
+
 **Timings never use `conversations.last_reply_at`.** Its meaning changes with
 the `app.waiting_since_as_first_unanswered_customer_message` config flag, and
 the newer `last_customer_reply_at` is explicitly documented as unindexed. Both

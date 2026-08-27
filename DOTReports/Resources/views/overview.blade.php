@@ -49,8 +49,11 @@
             'label' => 'Median resolution time',
             'value' => Format::duration($resolution['resolution']->current),
             'trend' => $resolution['resolution'],
-            'note'  => $resolution['coverage']['timed'].' of '
-                       .$resolution['coverage']['closed_total'].' closed conversations timed',
+            'note'  => $resolution['coverage']['timed'].' resolved by the team'
+                       .($resolution['coverage']['auto_closed']
+                           ? ', '.$resolution['coverage']['auto_closed'].' closed automatically'
+                           : '')
+                       .' of '.$resolution['coverage']['closed_total'].' closed',
         ])
     </div>
 
@@ -66,9 +69,18 @@
     @endif
 
     {{-- Coverage caveat, on the page rather than in documentation. --}}
-    @if ($resolution['coverage']['untimed'] > 0 || $resolution['coverage']['from_fallback'] > 0)
+    @if ($resolution['coverage']['untimed'] > 0 || $resolution['coverage']['from_fallback'] > 0
+         || $resolution['coverage']['auto_closed'] > 0)
         <div class="rep-caveat">
             <strong>How the resolution figure was calculated.</strong>
+            @if ($resolution['coverage']['auto_closed'] > 0)
+                {{ $resolution['coverage']['auto_closed'] }} conversation(s) were closed
+                automatically by Triage ({{ $resolution['coverage']['auto_reasons']['noise'] }}
+                not support requests, {{ $resolution['coverage']['auto_reasons']['inactivity'] }}
+                customer went quiet, {{ $resolution['coverage']['auto_reasons']['resolved'] }}
+                judged resolved) and are left out — the median describes conversations a
+                person resolved.
+            @endif
             @if ($resolution['coverage']['from_fallback'] > 0)
                 {{ $resolution['coverage']['from_fallback'] }} conversation(s) had no
                 <code>closed_at</code> timestamp and were timed from their status-change

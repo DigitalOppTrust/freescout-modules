@@ -75,10 +75,12 @@
 
     @if (!$resolution['timed'])
         @include('reports::partials.empty', [
-            'message' => 'No conversations from this period have been resolved yet.',
-            'hint'    => $resolution['closed_total']
-                ? $resolution['closed_total'].' were closed, but none carried a usable timestamp.'
-                : 'Nothing received in this period has been closed.',
+            'message' => 'No conversations from this period have been resolved by the team yet.',
+            'hint'    => $resolution['auto_closed'] && $resolution['auto_closed'] === $resolution['closed_total']
+                ? $resolution['closed_total'].' were closed, all of them automatically by Triage (not support requests, or the customer went quiet) — none was resolved by a person.'
+                : ($resolution['closed_total']
+                    ? $resolution['closed_total'].' were closed, but none carried a usable timestamp.'
+                    : 'Nothing received in this period has been closed.'),
         ])
     @else
         <div class="rep-stats">
@@ -109,6 +111,19 @@
             <strong>Coverage.</strong>
             Timed {{ $resolution['timed'] }} of {{ $resolution['closed_total'] }}
             closed conversation(s).
+            @if ($resolution['auto_closed'])
+                <strong>{{ $resolution['auto_closed'] }} were closed automatically by
+                Triage</strong>
+                ({{ $resolution['auto_reasons']['noise'] }} not support requests,
+                {{ $resolution['auto_reasons']['inactivity'] }} customer went quiet,
+                {{ $resolution['auto_reasons']['resolved'] }} judged resolved)
+                and are excluded — nobody resolved them, and the noise closes happen
+                within seconds of arrival.
+                @if ($resolution['all_median'] !== null)
+                    Counting them would have put the median at
+                    {{ Format::duration($resolution['all_median']) }}.
+                @endif
+            @endif
             @if ($resolution['from_fallback'])
                 {{ $resolution['from_fallback'] }} had no <code>closed_at</code> value
                 and were timed from their status-change history instead.

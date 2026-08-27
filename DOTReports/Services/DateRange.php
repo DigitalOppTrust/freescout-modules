@@ -50,9 +50,18 @@ class DateRange
      */
     public static function fromRequest($request)
     {
-        $preset = $request->get('period');
+        $preset = (string) $request->get('period');
 
-        // An explicit custom range wins over a preset.
+        // A named preset wins. The filter form always submits the From/To
+        // inputs too - pre-filled with whatever range is on screen - so if
+        // custom dates took precedence, picking "Today" would silently
+        // reload the previous range. Custom dates apply only when the
+        // period is "custom" (which the form sets when a date is edited)
+        // or absent altogether.
+        if ($preset !== '' && $preset !== 'custom' && isset(self::$presets[$preset])) {
+            return self::preset($preset);
+        }
+
         $from = $request->get('from');
         $to   = $request->get('to');
 
@@ -72,7 +81,7 @@ class DateRange
             }
         }
 
-        return self::preset($preset ?: (string) config('reports.default_days', 30));
+        return self::preset((string) config('reports.default_days', 30));
     }
 
     public static function preset($key)
