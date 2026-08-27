@@ -26,17 +26,31 @@ class TriageConversation implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /** No retries: a repeated API call costs money and a failed triage is
-     *  recoverable by hand. The decision row records why it failed. */
-    public $tries = 1;
+    /**
+     * Transient API failures (network, rate limit, overload) release the job
+     * back to the queue with a growing delay - see handle(). Anything else
+     * fails once and is recorded; a repeated call on a bad request costs
+     * money and changes nothing. In production one such failure left a
+     * ticket sitting unassigned for three days, so "recoverable by hand"
+     * was not good enough.
+     */
+    public $tries = 4;
 
     public $timeout = 120;
 
     protected $conversationId;
 
-    public function __construct($conversationId)
+    /**
+     * True when routing a closed ticket that a customer reply reopened: the
+     * usual "already decided" guards are skipped, and the model judges the
+     * latest message rather than the first.
+     */
+    protected $reopen;
+
+    public function __construct($conversationId, $reopen = false)
     {
         $this->conversationId = (int) $conversationId;
+        $this->reopen         = (bool) $reopen;
     }
 
     public function handle()
@@ -57,29 +71,49 @@ class TriageConversation implements ShouldQueue
             return;
         }
 
-        // Belt and braces: even with the dispatch lock, never write a second
-        // decision for a conversation that already has one.
-        $existing = \Modules\DOTTriage\Entities\TriageDecision::where('conversation_id', $conversation->id)
-            ->whereNull('error')
-            ->exists();
-        if ($existing) {
-            \Log::info('[Triage] conversation '.$conversation->id.' already has a decision, skipping');
+        if (!$this->reopen) {
+            // Belt and braces: even with the dispatch lock, never write a
+            // second decision for a conversation that already has one.
+            $existing = \Modules\DOTTriage\Entities\TriageDecision::where('conversation_id', $conversation->id)
+                ->whereNull('error')
+                ->exists();
+            if ($existing) {
+                \Log::info('[Triage] conversation '.$conversation->id.' already has a decision, skipping');
+                return;
+            }
+
+            // Non-support mail is identified from headers alone, before any
+            // API call - an auto-reply or newsletter should cost nothing to
+            // discard. (A reopening reply was header-checked at the hook.)
+            if ($this->handleNoise($conversation)) {
+                return;
+            }
+        } elseif ((int) $conversation->status !== \App\Conversation::STATUS_ACTIVE) {
             return;
         }
 
-        // Non-support mail is identified from headers alone, before any API
-        // call - an auto-reply or newsletter should cost nothing to discard.
-        if ($this->handleNoise($conversation)) {
-            return;
-        }
-
-        $decision = (new TriageEngine())->triage($conversation);
+        $engine   = new TriageEngine();
+        $decision = $engine->triage($conversation, $this->reopen);
 
         if ($decision->error) {
+            // Second line of retry, after the client's own quick attempts:
+            // come back in a minute, then five, then fifteen. The failed row
+            // goes so it neither blocks the retry nor inflates the error
+            // count; the last attempt's row stays as the record.
+            if ($engine->lastErrorTransient() && $this->attempts() < $this->tries) {
+                $delay = [60, 300, 900][min($this->attempts() - 1, 2)];
+                \Log::info('[Triage] conversation '.$conversation->id.' hit a transient API error, '
+                    .'retry '.$this->attempts().'/'.($this->tries - 1).' in '.$delay.'s: '.$decision->error);
+                $decision->delete();
+                $this->release($delay);
+                return;
+            }
+
             \Log::warning('[Triage] conversation '.$conversation->id.' failed: '.$decision->error);
             $this->dotlog('triage.failed', 'Triage failed: '.$decision->error,
                 $conversation, ['level' => 'error']);
-            $this->addNote($conversation, 'Triage failed: '.$decision->error);
+            $this->addNote($conversation, 'Triage failed: '.$decision->error
+                .' It will be retried automatically while it stays unassigned.');
             return;
         }
 
@@ -271,6 +305,14 @@ class TriageConversation implements ShouldQueue
             .($decision->confidence !== null
                 ? ', confidence '.number_format($decision->confidence, 2) : '').')',
             $conversation, ['user_id' => $profile->user_id]);
+
+        // The assignee now owes the customer a reply: start their clock.
+        try {
+            \Modules\DOTTriage\Services\Escalator::start($conversation);
+        } catch (\Throwable $e) {
+            \Log::warning('[Triage] could not start escalation clock for conversation '
+                .$conversation->id.': '.$e->getMessage());
+        }
     }
 
     protected function suggest($conversation, $profile, $decision, $confident, $threshold)

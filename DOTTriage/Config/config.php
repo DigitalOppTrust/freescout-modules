@@ -49,6 +49,20 @@ return [
     // API request timeout in seconds.
     'timeout' => env('TRIAGE_TIMEOUT', 30),
 
+    // Quick in-process attempts per API call on transient failures (network,
+    // 429, 5xx). The queued job then backs off for longer between its own
+    // attempts, and triage:run --failed catches anything still unrouted.
+    'api_attempts' => env('TRIAGE_API_ATTEMPTS', 3),
+
+    // Email the escalation target directly (in addition to the note on the
+    // ticket). Off means notes only.
+    'escalation_email' => env('TRIAGE_ESCALATION_EMAIL', true),
+
+    // When a customer replies to a closed ticket, the model must be at least
+    // this confident that the reply needs no action before the ticket is put
+    // back to closed. Below it, the ticket stays open for a person.
+    'reopen_confidence' => env('TRIAGE_REOPEN_CONFIDENCE', 0.75),
+
     // ── Automatic closing ────────────────────────────────────────────
     // Working minutes of customer silence after an agent reply before a
     // conversation is closed as inactive. 7200 = 5 working days.

@@ -23,7 +23,10 @@
             'label' => 'Conversations received',
             'value' => Format::number($summary['received']->current),
             'trend' => $summary['received'],
-            'note'  => Format::number($summary['inbound_messages']->current).' inbound messages',
+            'note'  => Format::number($summary['inbound_messages']->current).' inbound messages'
+                       .(!empty($summary['auto_closed']) && $summary['auto_closed']->current
+                           ? '; '.Format::number($summary['auto_closed']->current).' closed automatically by Triage'
+                           : ''),
         ])
 
         @if ($hasTriage && $triage)

@@ -63,9 +63,6 @@
                 <td>
                     @if ($p && $p->description)
                         {{ \Illuminate\Support\Str::limit($p->description, 90) }}
-                        @if ($p->keywords)
-                            <br><span class="triage-meta">keywords: {{ $p->keywords }}</span>
-                        @endif
                     @else
                         <span class="triage-meta">Not configured — excluded from routing</span>
                     @endif
@@ -131,6 +128,63 @@
         of {{ $users->count() }} agents available for routing.
     </p>
 
+    {{-- ── Escalation ────────────────────────────────────────────── --}}
+    <div class="panel panel-default">
+        <div class="panel-heading"><strong>Escalation</strong></div>
+        <div class="panel-body">
+            <p class="triage-meta" style="margin-bottom:12px;">
+                A clock starts when a ticket is assigned and whenever the customer writes
+                back; it stops when the assignee replies. Past the agent's window the
+                escalation target is emailed; {{ \Modules\DOTTriage\Services\BusinessTime::describe(config('triage.reassign_after_minutes', 120)) }}
+                later, if still unanswered, the ticket transfers to them. Checked every
+                30 minutes, working time only.
+                Last 30 days: <strong>{{ $escalationStats['notified'] }}</strong> notified,
+                <strong>{{ $escalationStats['reassigned'] }}</strong> transferred.
+            </p>
+
+            @if ($escalations->isEmpty())
+                <p class="triage-meta">No tickets are on the clock right now.</p>
+            @else
+                <table class="table table-condensed" style="margin-bottom:0;">
+                    <thead>
+                        <tr>
+                            <th>Ticket</th><th>Assigned to</th><th>Escalates to</th>
+                            <th>Quiet for</th><th>Window</th><th>Stage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach ($escalations as $e)
+                        @php $conv = $e->conversation; @endphp
+                        <tr>
+                            <td>
+                                @if ($conv)
+                                    <a href="{{ route('conversations.view', ['id' => $conv->id]) }}">#{{ $conv->number }}</a>
+                                    {{ \Illuminate\Support\Str::limit($conv->subject, 50) }}
+                                @else
+                                    #{{ $e->conversation_id }}
+                                @endif
+                            </td>
+                            <td>{{ $userNames[$e->assigned_user_id] ?? $e->assigned_user_id }}</td>
+                            <td>{{ $userNames[$e->escalate_to_user_id] ?? '—' }}</td>
+                            <td>{{ \Modules\DOTTriage\Services\BusinessTime::describe($e->minutesElapsed()) }}</td>
+                            <td>{{ \Modules\DOTTriage\Services\BusinessTime::describe($e->escalate_after_minutes) }}</td>
+                            <td>
+                                @if ($e->notified_at)
+                                    <span class="label label-warning">notified {{ $e->notified_at->diffForHumans() }}</span>
+                                @elseif ($e->isDueForNotify())
+                                    <span class="label label-danger">due</span>
+                                @else
+                                    <span class="triage-meta">waiting</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            @endif
+        </div>
+    </div>
+
     {{-- ── Automatic closing ─────────────────────────────────────── --}}
     <div class="panel panel-default">
         <div class="panel-heading">
@@ -189,9 +243,11 @@
                     @foreach ($closeStats as $reason => $n)
                         <span>
                             <span class="triage-meta">
-                                {{ ['backlog_noise' => 'Not a support request',
+                                {{ ['noise'         => 'Not a support request',
+                                    'backlog_noise' => 'Not a support request (backlog)',
                                     'inactivity'    => 'Customer stopped replying',
                                     'resolved'      => 'Looked resolved',
+                                    'not_reopened'  => 'Reply needed no action',
                                     'unrecorded'    => 'Closed (reason not recorded)'][$reason] ?? $reason }}
                             </span>
                             <strong>{{ $n }}</strong>

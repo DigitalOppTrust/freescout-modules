@@ -31,6 +31,26 @@ class ClaudeClient
     }
 
     /**
+     * Is a failure the kind that goes away on its own?
+     *
+     * Network errors, rate limits, overload and 5xx are transient; a bad key
+     * or a malformed request is not, and retrying those only burns time.
+     * The message check catches Anthropic's occasional 4xx "temporarily
+     * unavailable, please retry" responses, which say what they mean.
+     */
+    public static function isTransient($httpCode, $message = '')
+    {
+        $httpCode = (int) $httpCode;
+
+        if ($httpCode === 0 || $httpCode === 408 || $httpCode === 429 || $httpCode >= 500) {
+            return true;
+        }
+
+        return (bool) preg_match('/temporarily unavailable|please retry|overloaded|timed? ?out/i',
+            (string) $message);
+    }
+
+    /**
      * Cheap liveness probe for the settings screen.
      *
      * Sends a 1-token request rather than hitting a models endpoint, because
@@ -115,7 +135,7 @@ class ClaudeClient
             'messages'   => [['role' => 'user', 'content' => $userMessage]],
         ];
 
-        $result = $this->request($payload);
+        $result = $this->requestWithRetry($payload);
 
         if (!$result['ok']) {
             return [
@@ -125,6 +145,7 @@ class ClaudeClient
                 'tokens_out' => 0,
                 'error'      => $result['error'],
                 'http_code'  => $result['http_code'],
+                'transient'  => self::isTransient($result['http_code'], $result['error']),
             ];
         }
 
@@ -142,6 +163,37 @@ class ClaudeClient
             'error'      => '',
             'http_code'  => 200,
         ];
+    }
+
+    /**
+     * The first line of retry: a few quick in-process attempts for failures
+     * that usually clear in seconds (a dropped connection, a 529 overload).
+     * Anything still failing after this is reported as transient or not, so
+     * the caller - normally a queued job - can decide whether to come back
+     * later. Short waits only: this runs inside a queue worker and every
+     * second here is a second the next email waits.
+     */
+    protected function requestWithRetry(array $payload)
+    {
+        $attempts = max(1, (int) config('triage.api_attempts', 3));
+        $waits    = [2, 6, 15];
+        $result   = null;
+
+        for ($i = 0; $i < $attempts; $i++) {
+            $result = $this->request($payload);
+
+            if ($result['ok'] || !self::isTransient($result['http_code'], $result['error'])) {
+                return $result;
+            }
+
+            if ($i < $attempts - 1) {
+                \Log::info('[Triage] transient API failure ('.$result['http_code'].': '
+                    .$result['error'].'), retrying in '.$waits[min($i, 2)].'s');
+                sleep($waits[min($i, 2)]);
+            }
+        }
+
+        return $result;
     }
 
     protected function request(array $payload)

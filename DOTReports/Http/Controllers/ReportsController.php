@@ -274,6 +274,8 @@ class ReportsController extends Controller
                         $res['timed']],
                     [],
                     ['Coverage note'],
+                    ['Support requests received (automatic closes excluded)', $frt['received']],
+                    ['Awaiting first reply', $frt['unanswered']],
                     ['Closed conversations in period', $res['closed_total']],
                     ['Timed successfully', $res['timed']],
                     ['Needed line-item fallback', $res['from_fallback']],

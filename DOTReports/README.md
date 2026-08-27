@@ -37,7 +37,9 @@ quiet. Those closes stamp `closed_at` but not `closed_by_user_id`, and the
 arrival ones take seconds, so a mailbox where most mail is noise would otherwise
 report a "median resolution time" of under a minute — a figure describing the
 filter, not the team. The headline covers conversations a person closed; the
-automatic ones are counted and shown alongside it, broken down by reason.
+automatic ones are counted and shown alongside it, broken down by reason. The
+same exclusion applies to "awaiting first reply": mail Triage closed on its own
+was never awaiting anything.
 
 **Timings never use `conversations.last_reply_at`.** Its meaning changes with
 the `app.waiting_since_as_first_unanswered_customer_message` config flag, and

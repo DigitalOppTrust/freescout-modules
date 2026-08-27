@@ -57,6 +57,37 @@ class VolumeReport
     }
 
     /**
+     * Conversations received in the period that Triage closed on its own
+     * (noise at arrival, inactivity, judged resolved) - closed with no user
+     * on the close and a closed decision row. These arrived, so they count
+     * as received, but nobody was ever going to answer them, so they must
+     * not count as "awaiting a reply".
+     */
+    public function autoClosed(?DateRange $range = null)
+    {
+        static $hasTriage = null;
+
+        if ($hasTriage === null) {
+            $hasTriage = \Schema::hasTable('triage_decisions');
+        }
+
+        if (!$hasTriage) {
+            return 0;
+        }
+
+        return $this->conversationsQuery($range)
+            ->where('status', \App\Conversation::STATUS_CLOSED)
+            ->whereNull('closed_by_user_id')
+            ->whereExists(function ($q) {
+                $q->select(DB::raw(1))
+                  ->from('triage_decisions')
+                  ->whereRaw('triage_decisions.conversation_id = conversations.id')
+                  ->where('triage_decisions.closed', 1);
+            })
+            ->count();
+    }
+
+    /**
      * Inbound customer messages, which counts follow-ups as well as new
      * tickets. Diverges from the conversation count when customers send many
      * messages per issue - the gap between the two is itself informative.
@@ -263,6 +294,10 @@ class VolumeReport
             'outbound_replies' => Trend::of(
                 $this->outboundReplies(),
                 $this->outboundReplies($prev)
+            ),
+            'auto_closed' => Trend::of(
+                $this->autoClosed(),
+                $this->autoClosed($prev)
             ),
         ];
     }

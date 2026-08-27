@@ -12,13 +12,10 @@
         system mail and mail from our own address are closed straight away. No AI, no cost.
     </li>
     <li>
-        <strong>Keyword match.</strong> If an administrator gave someone keywords and one
-        appears in the subject or body, the ticket routes to them immediately — no model call.
-    </li>
-    <li>
-        <strong>The model.</strong> Otherwise the ticket goes to Claude with a list of who
-        handles what. It returns a person, a confidence between 0 and 1, and one sentence of
-        reasoning.
+        <strong>The model.</strong> The ticket goes to Claude with a list of who handles what
+        — each agent's <em>Handles</em> description. It returns a person, a confidence between
+        0 and 1, and one sentence of reasoning. There is no keyword shortcut: the description
+        is the whole of the routing rule, which is why its wording matters.
     </li>
     <li>
         <strong>Act, or just advise.</strong> Depending on configuration and confidence, the

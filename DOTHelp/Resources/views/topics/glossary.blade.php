@@ -40,13 +40,13 @@
     <dd>Plain wall-clock time — what the customer actually experienced. Reports show both this and working time side by side.</dd>
 
     <dt>Escalation</dt>
-    <dd>The intended mechanism for nudging and then reassigning a stalled ticket. Configurable but <strong>not currently running</strong>.</dd>
+    <dd>Nudges, then reassigns, an assigned ticket that has had no reply within its window. Runs every 30 minutes in working time.</dd>
 
     <dt>Retention</dt>
     <dd>Permanent deletion of old closed tickets. Distinct from closing, irreversible, switched off here.</dd>
 
     <dt>Profile</dt>
-    <dd>An agent's routing record: what they handle, their keywords, availability and ticket cap. No profile means no automatic assignment.</dd>
+    <dd>An agent's routing record: what they handle, their escalation target, availability and ticket cap. No profile means no automatic assignment.</dd>
 
     <dt>Rotation group</dt>
     <dd>A set of agents treated as interchangeable. The model picks the group; the system picks whoever was assigned least recently.</dd>

@@ -1,46 +1,43 @@
-<div class="dothelp-callout dothelp-callout-warn">
-    <p>
-        <strong>Read this first: escalation is not currently running.</strong>
-    </p>
-    <p class="dothelp-callout-last">
-        The settings exist, the screens exist, and an administrator can configure who escalates
-        to whom — but no code currently creates an escalation, sends a nudge, or reassigns a
-        stalled ticket. <strong>Nothing will chase a ticket you forget about.</strong> That
-        makes the rest of this page a description of intent, and makes the habits in
-        <a href="{{ route('dothelp.topic', 'daily-work') }}">Your daily routine</a> the real
-        safety net.
-    </p>
-</div>
+<p class="dothelp-intro">
+    Escalation is what chases a ticket that has been assigned but not answered. It runs
+    automatically, in working time, and it does two things in order: it tells someone, then it
+    moves the ticket.
+</p>
 
-<h3>What is designed, and configured</h3>
+<h3>How it works</h3>
 
 <p>
-    Each agent profile can name an <strong>escalation target</strong> and a window. The intended
-    behaviour is two-stage:
+    Each agent profile names an <strong>escalation target</strong> and a window. A clock starts
+    when a ticket is assigned to you — by triage or by a person — and again every time the
+    customer writes back. It stops the moment you send the customer a reply.
 </p>
 
 <ol class="dothelp-steps">
     <li>
-        <strong>Nudge.</strong> If the assignee has not replied to the customer within their
-        window, the target is notified.
+        <strong>Nudge.</strong> If you have not replied within your window, your escalation
+        target gets an email and a <em>Triage</em> note appears on the ticket saying so. The
+        ticket is still yours.
     </li>
     <li>
         <strong>Transfer.</strong> If it is still unanswered a couple of hours later, ownership
-        moves to the target.
+        moves to the target, they are notified as the new assignee, and <em>their</em> clock
+        starts against <em>their</em> escalation target.
     </li>
 </ol>
 
 <p>
-    Chains are bounded so a ticket cannot bounce indefinitely, and configuring a loop
-    (A escalates to B, B escalates back to A) is rejected when saved.
+    Chains are bounded so a ticket cannot bounce indefinitely, a ticket never escalates back to
+    someone it has already been through, and configuring a loop (A escalates to B, B escalates
+    back to A) is rejected when saved. The check runs every 30 minutes, so a window can be
+    overrun by up to half an hour.
 </p>
 
 <h3>Working time, not wall clock</h3>
 
 <p>
-    Every window in this system is counted in <strong>working time</strong>, which currently
-    means <em>weekends are skipped</em>. A one-working-day window on a ticket that arrives
-    Friday afternoon expires Monday afternoon, not Saturday.
+    Every window is counted in <strong>working time</strong>, which currently means
+    <em>weekends are skipped</em>. A one-working-day window on a ticket that arrives Friday
+    afternoon expires Monday afternoon, not Saturday.
 </p>
 
 <p>
@@ -49,7 +46,16 @@
     are not modelled — a window that expires at 02:00 expires at 02:00.
 </p>
 
-<h3>What actually catches a stalled ticket today</h3>
+<div class="dothelp-callout dothelp-callout-warn">
+    <p class="dothelp-callout-last">
+        <strong>Only replies sent from FreeScout stop the clock.</strong> If you answer the
+        customer from your own mailbox, the system sees a customer message, not a reply — the
+        clock keeps running and you will be escalated for a ticket you answered. See
+        <a href="{{ route('dothelp.topic', 'replying') }}">Replying</a>.
+    </p>
+</div>
+
+<h3>What catches a stalled ticket</h3>
 
 <table class="table dothelp-table">
     <thead>
@@ -57,7 +63,11 @@
     </thead>
     <tbody>
         <tr>
-            <td>Nobody has answered a ticket at all</td>
+            <td>A ticket is assigned and nobody has replied</td>
+            <td>Escalation, as above — provided the assignee's profile names a target.</td>
+        </tr>
+        <tr>
+            <td>Nobody has answered a ticket and nobody owns it</td>
             <td>
                 <strong>Nobody.</strong> It sits in Unassigned until a human notices. Automatic
                 closing deliberately refuses to touch it — closing an unanswered ticket would
@@ -72,17 +82,12 @@
                 themselves</a>.
             </td>
         </tr>
-        <tr>
-            <td>A ticket is assigned to someone who has stopped working it</td>
-            <td>
-                <strong>Nobody, automatically.</strong> Check the <em>Assigned</em> folder
-                periodically, or ask an administrator for the backlog figures in the reports.
-            </td>
-        </tr>
     </tbody>
 </table>
 
 <p>
-    The practical consequence: <strong>the oldest unanswered ticket in Unassigned is the one
-    thing worth checking every day</strong>, because no automation is watching it for you.
+    The practical consequence: <strong>the oldest ticket in Unassigned is still the one thing
+    worth checking every day</strong>, because escalation only watches tickets that have an
+    owner. Administrators can see every ticket currently on the clock under
+    Manage → Triage → Escalation.
 </p>

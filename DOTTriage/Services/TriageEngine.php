@@ -9,6 +9,9 @@ class TriageEngine
 {
     protected $client;
 
+    /** Whether the last failure was the kind worth retrying. */
+    protected $lastTransient = false;
+
     public function __construct(?ClaudeClient $client = null)
     {
         $this->client = $client ?: new ClaudeClient();
@@ -21,14 +24,20 @@ class TriageEngine
      * recorded on the decision row and the conversation is left unassigned,
      * because a triage fault must never block support email.
      */
-    public function triage(\App\Conversation $conversation)
+    /**
+     * @param bool $latest judge the most recent customer message rather than
+     *                     the first - used when a closed ticket is reopened
+     *                     by a follow-up and needs routing afresh
+     */
+    public function triage(\App\Conversation $conversation, $latest = false)
     {
         $started = microtime(true);
+        $this->lastTransient = false;
 
-        $body    = $this->conversationText($conversation);
+        $body    = $this->conversationText($conversation, $latest);
         $subject = (string) $conversation->subject;
 
-        $profiles = TriageProfile::routable();
+        $profiles = TriageProfile::routable($conversation->mailbox_id);
 
         if ($profiles->isEmpty()) {
             return $this->record($conversation, [
@@ -37,17 +46,10 @@ class TriageEngine
             ]);
         }
 
-        // Deterministic keyword match first - free, instant, and often more
-        // reliable than a model for unambiguous cases like "invoice".
-        if ($match = $this->keywordMatch($profiles, $subject.' '.$body)) {
-            return $this->record($conversation, [
-                'suggested_user_id' => $match->user_id,
-                'confidence'        => 1.0,
-                'method'            => 'keyword',
-                'reasoning'         => 'Matched a configured keyword for this agent.',
-                'duration_ms'       => (int) round((microtime(true) - $started) * 1000),
-            ]);
-        }
+        // No keyword shortcut. Keyword hits were recorded as confidence 1.00
+        // and never learned anything; in production they produced most of the
+        // human overrides. Routing is the model reasoning over the agent
+        // descriptions, and improving routing means improving those.
 
         // Budget guard - stop calling the API past the daily cap.
         $limit = (int) config('triage.daily_call_limit', 500);
@@ -74,6 +76,8 @@ class TriageEngine
         $duration = (int) round((microtime(true) - $started) * 1000);
 
         if (!$result['ok']) {
+            $this->lastTransient = !empty($result['transient']);
+
             return $this->record($conversation, [
                 'method'      => 'model',
                 'model'       => config('triage.model'),
@@ -132,12 +136,18 @@ class TriageEngine
         return "From: {$from}\nSubject: {$subject}\n\n{$body}";
     }
 
-    /** Extract plain text from the conversation's first customer message. */
-    protected function conversationText(\App\Conversation $conversation)
+    /** Did the last triage() fail in a way that is worth retrying? */
+    public function lastErrorTransient()
+    {
+        return $this->lastTransient;
+    }
+
+    /** Extract plain text from the conversation's first (or latest) customer message. */
+    protected function conversationText(\App\Conversation $conversation, $latest = false)
     {
         $thread = $conversation->threads()
             ->where('type', \App\Thread::TYPE_CUSTOMER)
-            ->orderBy('created_at', 'asc')
+            ->orderBy('created_at', $latest ? 'desc' : 'asc')
             ->first();
 
         if (!$thread) {
@@ -148,21 +158,6 @@ class TriageEngine
         $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
         return trim(preg_replace('/\s+/u', ' ', $text));
-    }
-
-    protected function keywordMatch($profiles, $haystack)
-    {
-        $haystack = mb_strtolower($haystack);
-
-        foreach ($profiles as $p) {
-            foreach ($p->keywordList() as $kw) {
-                if ($kw !== '' && mb_strpos($haystack, $kw) !== false) {
-                    return $p;
-                }
-            }
-        }
-
-        return null;
     }
 
     /**

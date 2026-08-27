@@ -33,8 +33,10 @@
         @include('reports::partials.empty', [
             'message' => 'No conversations in this period have had an agent reply yet.',
             'hint'    => $frt['received']
-                ? $frt['received'].' conversation(s) received and still awaiting a first reply.'
-                : 'No conversations were received in this period.',
+                ? $frt['received'].' support request(s) received and still awaiting a first reply.'
+                : ($frt['auto_closed']
+                    ? 'Everything received in this period was closed automatically by Triage as not needing a reply.'
+                    : 'No conversations were received in this period.'),
         ])
     @else
         <div class="rep-stats">
@@ -56,7 +58,10 @@
                 'label' => 'Awaiting first reply',
                 'value' => Format::number($frt['unanswered']),
                 'trend' => null,
-                'note'  => 'of '.Format::number($frt['received']).' received',
+                'note'  => 'of '.Format::number($frt['received']).' support requests'
+                           .($frt['auto_closed']
+                               ? ' ('.Format::number($frt['auto_closed']).' more were closed automatically)'
+                               : ''),
             ])
         </div>
 

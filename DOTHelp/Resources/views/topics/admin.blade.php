@@ -9,7 +9,7 @@
 
 <ul>
     <li>
-        <strong>Agents</strong> — one row per person, showing what they handle, their keywords,
+        <strong>Agents</strong> — one row per person, showing what they handle, their
         rotation group, escalation target, SLA window and routing status
         (<em>Routing</em>, <em>Away</em>, <em>Full</em>, or <em>Off</em>). Clicking through opens
         that agent's profile, which is where the "Handles" description is written. That

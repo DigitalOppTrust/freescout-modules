@@ -174,6 +174,9 @@ class ResolutionReport
             case 'inactivity':
                 return 'inactivity';
             case 'resolved':
+            case 'not_reopened':
+                // A customer reply after closing that the model judged to
+                // need no action - the close stands, nothing more was owed.
                 return 'resolved';
             default:
                 return 'noise';
@@ -337,16 +340,24 @@ class ResolutionReport
             $working[] = BusinessTime::minutesBetween($start, $end);
         }
 
-        // The denominator that matters: how many received conversations have
-        // had any agent reply at all. Awaiting-first-reply is the gap.
-        $received = (new VolumeReport($this->range, $this->mailboxId))->received();
+        // The denominator that matters: how many support requests have had
+        // any agent reply at all. Awaiting-first-reply is the gap. Mail that
+        // Triage closed on its own is not awaiting anything - with most of
+        // this mailbox's traffic being noise, counting it made "71 of 88
+        // awaiting a first reply" out of a true figure of five.
+        $volume     = new VolumeReport($this->range, $this->mailboxId);
+        $received   = $volume->received();
+        $autoClosed = $volume->autoClosed();
+        $requests   = max(0, $received - $autoClosed);
 
         return [
-            'elapsed'   => Stats::summarise($elapsed),
-            'working'   => Stats::summarise($working),
-            'answered'  => count($elapsed),
-            'received'  => $received,
-            'unanswered'=> max(0, $received - count($elapsed)),
+            'elapsed'     => Stats::summarise($elapsed),
+            'working'     => Stats::summarise($working),
+            'answered'    => count($elapsed),
+            'received'    => $requests,
+            'received_all'=> $received,
+            'auto_closed' => $autoClosed,
+            'unanswered'  => max(0, $requests - count($elapsed)),
         ];
     }
 

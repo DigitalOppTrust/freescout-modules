@@ -17,6 +17,7 @@ class TriageRun extends Command
     protected $signature = 'triage:run
                             {conversation? : Conversation id. Omit to process all unassigned.}
                             {--dry : Show the decision without assigning or noting}
+                            {--failed : Only unassigned conversations whose triage failed and was never retried}
                             {--limit=10 : Maximum conversations to process in bulk mode}';
 
     protected $description = 'Run triage against one conversation or all unassigned ones';
@@ -30,6 +31,32 @@ class TriageRun extends Command
             if ($conversations->isEmpty()) {
                 $this->error('Conversation '.$id.' not found.');
                 return 1;
+            }
+        } elseif ($this->option('failed')) {
+            // The safety net under the queue's own retries: still unassigned,
+            // still active, every decision so far an error, and old enough
+            // that a queued retry is not already about to handle it.
+            $conversations = \App\Conversation::whereNull('user_id')
+                ->where('status', \App\Conversation::STATUS_ACTIVE)
+                ->where('state', '!=', \App\Conversation::STATE_DELETED)
+                ->where('created_at', '<', now()->subMinutes(30))
+                ->whereExists(function ($q) {
+                    $q->select(\DB::raw(1))->from('triage_decisions')
+                      ->whereRaw('triage_decisions.conversation_id = conversations.id')
+                      ->whereNotNull('error');
+                })
+                ->whereNotExists(function ($q) {
+                    $q->select(\DB::raw(1))->from('triage_decisions')
+                      ->whereRaw('triage_decisions.conversation_id = conversations.id')
+                      ->whereNull('error');
+                })
+                ->orderBy('id')
+                ->limit((int) $this->option('limit'))
+                ->get();
+
+            if ($conversations->isEmpty()) {
+                $this->info('No failed triages awaiting a retry.');
+                return 0;
             }
         } else {
             $conversations = \App\Conversation::whereNull('user_id')

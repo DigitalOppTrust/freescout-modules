@@ -389,7 +389,12 @@ $frt = $r->firstResponseTimes();
 // C1 (60), C2 (30), C10 (10), C11 (180) have real agent replies. C4 has only a NOTE.
 check('answered count excludes note-only C4', $frt['answered'], 4);
 check('median FRT = 45 min', (int) $frt['elapsed']['median'], 45);
-check('unanswered = 4', $frt['unanswered'], 4);
+// 8 received, minus C9 and C10 which Triage closed itself = 6 support
+// requests; 4 answered -> 2 awaiting. C3 and C4 and C8: C3 closed untimed,
+// C4 note-only, C8 reopened - all genuinely unanswered.
+check('automatic closes counted', $v->autoClosed(), 2);
+check('FRT denominator excludes automatic closes', [$frt['received'], $frt['received_all']], [6, 8]);
+check('unanswered = 2, not 4', $frt['unanswered'], 2);
 
 echo "\nREOPENED\n";
 check('C8 detected as reopened', $r->reopened()['count'], 1);

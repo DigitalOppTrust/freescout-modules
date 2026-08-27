@@ -43,7 +43,7 @@
         <!-- 2. routing -->
         <rect x="10" y="216" width="150" height="42" rx="4" class="dh-box dh-ours"/>
         <text x="85" y="235" class="dh-t">Who should take it?</text>
-        <text x="85" y="249" class="dh-t dh-sm">keyword, then model</text>
+        <text x="85" y="249" class="dh-t dh-sm">the model decides</text>
 
         <path d="M160 237 L214 237" class="dh-arrow"/>
 
@@ -113,20 +113,12 @@
 
 <h4>3. Who should handle it?</h4>
 <p>
-    Real support mail then gets routed. Two mechanisms, in order:
+    Real support mail then gets routed: the ticket's subject and body are sent to Claude
+    along with a list of agents and what each one handles. It replies with a suggested
+    person, a confidence score, and one sentence of reasoning. If the API is briefly
+    unavailable the attempt is retried automatically — a ticket is not left unrouted by a
+    bad minute.
 </p>
-<ul>
-    <li>
-        <strong>Keywords</strong> — if an administrator has given someone keywords like
-        <code>invoice, refund</code>, a match routes the ticket instantly. Free and
-        deterministic.
-    </li>
-    <li>
-        <strong>The model</strong> — otherwise the ticket's subject and body are sent to
-        Claude along with a list of agents and what each one handles. It replies with a
-        suggested person, a confidence score, and one sentence of reasoning.
-    </li>
-</ul>
 <p>
     Either way a note appears on the ticket explaining what was decided and why. See
     <a href="{{ route('dothelp.topic', 'triage') }}">How tickets reach you</a> for what those

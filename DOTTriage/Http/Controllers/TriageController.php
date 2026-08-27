@@ -64,6 +64,13 @@ class TriageController extends Controller
             'closeStats'=> TriageDecision::closeCounts(30),
             'retention' => Settings::group('retention'),
             'retentionEligible' => RetentionSweeper::eligibleCount(),
+            'escalations' => \Modules\DOTTriage\Entities\TriageEscalation::where('active', true)
+                ->orderBy('clock_started_at')->get(),
+            'escalationStats' => [
+                'notified'   => \Modules\DOTTriage\Entities\TriageEscalation::where('notified_at', '>=', now()->subDays(30))->count(),
+                'reassigned' => \Modules\DOTTriage\Entities\TriageEscalation::where('reassigned_at', '>=', now()->subDays(30))->count(),
+            ],
+            'userNames' => \App\User::pluck('first_name', 'id')->all(),
         ]);
     }
 
@@ -240,7 +247,8 @@ class TriageController extends Controller
             ['user_id' => $userId, 'mailbox_id' => $mailboxId],
             [
                 'description'            => $request->input('description'),
-                'keywords'               => $request->input('keywords'),
+                // Keywords are no longer saved or used: routing is the model
+                // reasoning over the description. See TriageEngine::triage().
                 'rotation_group'         => $request->input('rotation_group') ?: null,
                 'escalate_to_user_id'    => $escalateTo,
                 'escalate_after_minutes' => $request->input('escalate_after_minutes') ?: null,

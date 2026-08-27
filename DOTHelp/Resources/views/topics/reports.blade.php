@@ -83,15 +83,12 @@
     </li>
 </ul>
 
-<div class="dothelp-callout dothelp-callout-warn">
+<div class="dothelp-callout">
     <p class="dothelp-callout-last">
-        <strong>Two figures currently read as zero and should not be trusted.</strong> The
-        escalation counts on the Triage and Team tabs will always be empty, because escalation
-        does not run — see <a href="{{ route('dothelp.topic', 'escalation') }}">Escalation</a>.
-        Separately, the "Reopened by a human" counter on the Triage settings screen is never
-        written to, so it stays at zero regardless of how many tickets are actually reopened.
-        The Resolution tab's own "Reopened after closing" figure <em>is</em> real — it is derived
-        from ticket history rather than that counter.
+        <strong>Automatic closes are kept out of the team figures.</strong> Mail that Triage
+        closed on its own — auto-replies, bounces, newsletters — is counted as received but is
+        excluded from the resolution median and from "awaiting first reply", because nobody was
+        ever going to answer it. Each page says how many were excluded and why.
     </p>
 </div>
 

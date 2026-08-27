@@ -4,28 +4,59 @@ AI-assisted ticket routing and SLA escalation for FreeScout.
 
 ## Status
 
-Skeleton only. The module loads and registers, but performs no triage yet.
-`TRIAGE_ENABLED` defaults to `false`.
+Live in production. `TRIAGE_ENABLED` must be `true` in the FreeScout `.env`.
 
-## How it will work
+## How it works
 
-**Routing** — when a customer email arrives, the module matches the ticket
-against per-agent expertise profiles and assigns it to the best fit. Decisions
-below the confidence threshold are left unassigned with a suggestion note.
+**Noise** — auto-replies, bounces, newsletters, system notifications and mail
+the mailbox sends itself are recognised from headers and closed at arrival, at
+no cost. Mail the headers cannot settle goes to the model, which can also say
+"not a support request".
 
-**Escalation** — if the assignee has not replied within the configured window,
-a manager is notified. This is a plain timer comparison; no model is involved.
+**Routing** — the model reads the message and a list of agents with what each
+one handles (the profile's *Handles* description), and returns a person, a
+confidence and one sentence of reasoning. At or above the confidence threshold
+the ticket is assigned; below it, a note suggests. There is no keyword routing:
+keyword hits were recorded as certainty and produced most of the human
+overrides, so improving routing means improving the descriptions.
 
-**Review** — every decision is recorded with its reasoning and whether a human
-later overrode it, so routing accuracy can be measured rather than assumed.
+**Retry** — a transient API failure (network, rate limit, overload) is retried
+quickly inside the call, then by releasing the queued job with a growing delay,
+and finally by an hourly `triage:run --failed` sweep for anything still
+unassigned. A ticket is never left orphaned by one bad API minute.
+
+**Escalation** — a clock starts when a ticket is assigned and whenever the
+customer writes back; it stops when the assignee replies. Past the agent's
+window (working time, weekends excluded) the escalation target is emailed and a
+note is left; after a further grace period the ticket transfers to them and
+their own clock starts, one hop deeper. Depth and chain bound the hops.
+`triage:escalate --apply` runs every 30 minutes; without `--apply` it is a dry
+run listing what is due.
+
+**Reopening** — FreeScout reopens a closed ticket on any customer reply. With
+the reopen judgement on (Manage → Triage), the ticket is reopened and the model
+is asked whether the reply needs a person. If it clearly does not ("thanks",
+out-of-office, a reply to the closure email that says nothing) the ticket goes
+back to closed with a note; anything unclear stays open, and an unowned ticket
+that stays open is routed afresh on the reply that reopened it.
+
+**Closing** — hourly sweep: backlog noise, inactivity after an agent reply,
+and (optionally) tickets the model judges resolved. See Manage → Triage.
+
+**Review** — every decision is recorded with its reasoning, whether a human
+later overrode it, and whether a human reopened something it closed, so
+accuracy is measured rather than assumed.
 
 ## Hooks used
 
 | Hook | Purpose |
 |---|---|
-| `thread.created` | Customer email arrives — trigger triage |
-| `conversation.user_changed` | Detect human corrections to routing |
-| `conversation.user_replied` | Reset the escalation timer |
+| `thread.created` | Customer email arrives — queue triage; on an assigned ticket, (re)start the escalation clock; on a just-reopened ticket, queue the reopen judgement |
+| `conversation.status_changing` | A customer reply is about to reopen a closed ticket — mark it for judgement |
+| `conversation.user_changed` | Detect human corrections to routing; start the new assignee's clock |
+| `conversation.user_replied` | Stop the escalation clock |
+| `conversation.status_changed` | Stop the clock on close; record a human reopening something triage closed |
+| `schedule` | `triage:sweep`, `triage:escalate`, `triage:run --failed` |
 
 ## Safety
 

@@ -112,19 +112,6 @@
         </div>
 
         <div class="form-group">
-            <label class="col-sm-3 control-label">Keywords</label>
-            <div class="col-sm-9">
-                <input type="text" name="keywords" class="form-control"
-                    value="{{ old('keywords', $profile->keywords ?? '') }}"
-                    placeholder="invoice, refund, payment failed">
-                <p class="help-block">
-                    Comma separated. Checked <em>before</em> the model runs — a match routes
-                    instantly with no API call and no cost. Use for unambiguous terms only.
-                </p>
-            </div>
-        </div>
-
-        <div class="form-group">
             <label class="col-sm-3 control-label">Rotation group</label>
             <div class="col-sm-9">
                 <input type="text" name="rotation_group" class="form-control"

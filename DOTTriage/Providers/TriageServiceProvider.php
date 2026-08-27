@@ -33,6 +33,7 @@ class TriageServiceProvider extends ServiceProvider
         $this->commands([
             \Modules\DOTTriage\Console\TriageRun::class,
             \Modules\DOTTriage\Console\TriageSweep::class,
+            \Modules\DOTTriage\Console\TriageEscalate::class,
             \Modules\DOTTriage\Console\TriageRetention::class,
         ]);
     }
@@ -78,8 +79,34 @@ class TriageServiceProvider extends ServiceProvider
         // --apply matters: the command defaults to a dry run.
         \Eventy::addFilter('schedule', function ($schedule) {
             $schedule->command('triage:sweep --apply')->hourly()->withoutOverlapping();
+            // The escalation clock. Half-hourly so a window is never overrun
+            // by much; withoutOverlapping so two sweeps cannot both transfer
+            // the same ticket.
+            $schedule->command('triage:escalate --apply')->everyThirtyMinutes()->withoutOverlapping();
+            // Safety net under the queue's own retries: anything whose
+            // triage failed outright and is still sitting unassigned.
+            $schedule->command('triage:run --failed --limit=20')->hourly()->withoutOverlapping();
             return $schedule;
         });
+
+        // A customer email is about to reopen a non-active conversation.
+        // Core fires this filter before the thread exists, so the decision
+        // cannot be made here - the id is parked so thread.created, a moment
+        // later in the same fetch, knows this thread is the one that reopened
+        // a closed ticket and hands it to the model.
+        \Eventy::addFilter('conversation.status_changing', function ($status, $conversation = null) {
+            try {
+                if ($conversation
+                    && (int) $conversation->status === (int) \App\Conversation::STATUS_CLOSED
+                    && (int) $status === (int) \App\Conversation::STATUS_ACTIVE) {
+                    \Cache::put('triage.reopening.'.$conversation->id, 1, 10);
+                }
+            } catch (\Throwable $e) {
+                \Log::error('[Triage] status_changing handler failed: '.$e->getMessage());
+            }
+
+            return $status;
+        }, 20, 2);
 
         // A new customer message arrived. Queue triage for it if the
         // conversation has nobody assigned.
@@ -97,13 +124,77 @@ class TriageServiceProvider extends ServiceProvider
 
         // A human reassigned a conversation. If triage had suggested someone
         // else, record that as an override - this is the accuracy signal.
+        // Either way the new assignee owes the customer a reply, so their
+        // escalation clock starts (or stops, if it was unassigned).
         \Eventy::addAction('conversation.user_changed', function ($conversation, $user = null) {
             try {
+                if (\Modules\DOTTriage\Services\Escalator::$transferring) {
+                    return;   // the escalation sweep itself, not a person
+                }
                 $this->recordOverride($conversation, $user);
+                \Modules\DOTTriage\Services\Escalator::start($conversation);
             } catch (\Throwable $e) {
                 \Log::error('[Triage] user_changed handler failed: '.$e->getMessage());
             }
         }, 20, 2);
+
+        // The assignee replied to the customer: the clock stops.
+        \Eventy::addAction('conversation.user_replied', function ($conversation, $thread = null) {
+            try {
+                if ($conversation) {
+                    \Modules\DOTTriage\Services\Escalator::stop($conversation->id);
+                }
+            } catch (\Throwable $e) {
+                \Log::error('[Triage] user_replied handler failed: '.$e->getMessage());
+            }
+        }, 20, 2);
+
+        // Closing stops the clock. A person reopening something triage closed
+        // is the false-positive signal the settings screen reports - until
+        // now nothing wrote it, so the counter was always zero.
+        \Eventy::addAction('conversation.status_changed',
+            function ($conversation, $user = null, $changedOnReply = false, $prevStatus = null) {
+                try {
+                    $this->onStatusChanged($conversation, $user, $prevStatus);
+                } catch (\Throwable $e) {
+                    \Log::error('[Triage] status_changed handler failed: '.$e->getMessage());
+                }
+            }, 20, 4);
+    }
+
+    protected function onStatusChanged($conversation, $user, $prevStatus)
+    {
+        if (!$conversation) {
+            return;
+        }
+
+        $closed = (int) \App\Conversation::STATUS_CLOSED;
+        $active = (int) \App\Conversation::STATUS_ACTIVE;
+
+        if ((int) $conversation->status === $closed) {
+            \Modules\DOTTriage\Services\Escalator::stop($conversation->id);
+            return;
+        }
+
+        if ((int) $prevStatus === $closed && (int) $conversation->status === $active) {
+            if ($user) {
+                $decision = \Modules\DOTTriage\Entities\TriageDecision::where('conversation_id', $conversation->id)
+                    ->where('closed', true)
+                    ->whereNull('reopened_at')
+                    ->orderBy('id', 'desc')
+                    ->first();
+
+                if ($decision) {
+                    $decision->reopened_by_user_id = $user->id;
+                    $decision->reopened_at = now();
+                    $decision->save();
+                }
+            }
+
+            if ($conversation->user_id) {
+                \Modules\DOTTriage\Services\Escalator::start($conversation);
+            }
+        }
     }
 
     /**
@@ -132,12 +223,34 @@ class TriageServiceProvider extends ServiceProvider
         $noise = (new \Modules\DOTTriage\Services\NoiseDetector())
             ->classify($thread, $conversation->mailbox);
 
-        if ($noise['noise'] && $this->isReplyToExisting($conversation, $thread)) {
+        $existing = $this->isReplyToExisting($conversation, $thread);
+
+        if ($noise['noise'] && $existing) {
+            \Cache::forget('triage.reopening.'.$conversation->id);
             $this->noteWithoutReopening($conversation, $noise);
             return;
         }
 
+        // This reply just reopened a closed ticket (see the status_changing
+        // filter). Whether it should stay open is the model's call, made in
+        // the queue; routing follows from that if nobody owns it.
+        if ($existing && \Cache::pull('triage.reopening.'.$conversation->id)) {
+            \Modules\DOTTriage\Jobs\JudgeReopen::dispatch($conversation->id, $thread->id);
+
+            if (class_exists(\Modules\DOTLog\Services\DotLog::class)) {
+                \Modules\DOTLog\Services\DotLog::write('triage.queued',
+                    'Customer replied to a closed ticket - queued for reopen judgement',
+                    ['conversation' => $conversation]);
+            }
+            return;
+        }
+
         if ($conversation->user_id) {
+            // A customer wrote back on an assigned ticket: the assignee owes
+            // a reply, so make sure a clock is running.
+            if ($existing) {
+                \Modules\DOTTriage\Services\Escalator::rearm($conversation);
+            }
             return;
         }
 

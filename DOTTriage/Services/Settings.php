@@ -106,6 +106,20 @@ class Settings
                 ],
             ],
 
+            // ── Reopening ────────────────────────────────────────────
+            'reopen_judge_enabled' => [
+                'type'    => 'bool',
+                'default' => true,
+                'env'     => null,
+                'group'   => 'closing',
+                'label'   => 'Let the model decide whether a customer reply reopens a closed ticket',
+                'help'    => 'FreeScout reopens a closed ticket on any customer reply, including '
+                            .'"thanks", out-of-office and replies to the closure email. With this '
+                            .'on, the ticket is reopened and the model is asked whether the reply '
+                            .'needs a person; if it clearly does not, the ticket is put back to '
+                            .'closed with a note. Anything unclear stays open.',
+            ],
+
             // ── Closing: safety ──────────────────────────────────────
             'close_max_per_run' => [
                 'type'    => 'choice',
