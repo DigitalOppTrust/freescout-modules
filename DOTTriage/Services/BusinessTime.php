@@ -126,6 +126,17 @@ class BusinessTime
             return $hours.' '.($hours === 1 ? 'hour' : 'hours');
         }
 
+        // Elapsed times are rarely exact multiples. "9945 minutes" on an
+        // escalation note is true and useless; "6.9 working days" is what
+        // the reader needs.
+        if ($minutes >= 1440) {
+            return round($minutes / 1440, 1).' working days';
+        }
+
+        if ($minutes >= 60) {
+            return round($minutes / 60, 1).' hours';
+        }
+
         return $minutes.' minutes';
     }
 }
