@@ -38,6 +38,13 @@ safety story:
 | on | off | Google button appears. Passwords still work. |
 | on | on | Password sign-in is refused; reset link hidden. |
 
+Under enforcement the email and password fields are hidden from the login page
+as well as refused. Core exposes no hook for that, so it is done with CSS
+injected through `login_form.before` rather than by patching the core view,
+which an upgrade would undo. **The refusal is server-side and does not depend
+on the page** — see `login.custom_check` in the service provider; hiding the
+form is honesty about what the page can do, not the control itself.
+
 **Never turn on enforcement before observing a successful Google sign-in.**
 There is no staging environment, and six of the eight users are administrators.
 
@@ -108,8 +115,9 @@ security is back to being a password, so keep the list to one.
   login form. It is hash-validated and time-limited, but it is a login path
   that does not pass through SSO. Left as-is, documented rather than silently
   inherited.
-- **Core's `remember` checkbox** still appears on the password form. Under
-  enforcement the password form is refused anyway, so it has no effect.
+- **Core's `remember` checkbox** is hidden along with the rest of the password
+  form under enforcement, and the POST is refused regardless, so it has no
+  effect.
 
 ## Audit
 

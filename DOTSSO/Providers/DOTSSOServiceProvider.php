@@ -75,6 +75,29 @@ class DOTSSOServiceProvider extends ServiceProvider
             return;
         }
 
+        // The login page is a guest page and pulls in no module stylesheets
+        // of its own, so the CSS is injected alongside the markup rather than
+        // through the layout's stylesheet section.
+        //
+        // Cache-busted on file mtime: without it a styling fix sits behind
+        // whatever the browser cached, which has bitten DOTHelp before.
+        \Eventy::addAction('login_form.before', function () {
+            $css = asset('modules/dotsso/css/module.css');
+
+            $path = public_path('modules/dotsso/css/module.css');
+            if (file_exists($path)) {
+                $css .= '?v='.filemtime($path);
+            }
+
+            echo '<link rel="stylesheet" href="'.e($css).'">';
+
+            // Under enforcement the password fields are hidden here too, so
+            // the stylesheet that hides them arrives in the same place.
+            if (Settings::enforcing()) {
+                echo view('dotsso::enforced')->render();
+            }
+        });
+
         // The button. Sits outside the login <form> in core's template, so
         // it is a link rather than a nested form.
         \Eventy::addAction('login_form.after', function () {
