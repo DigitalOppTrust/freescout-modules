@@ -11,6 +11,7 @@ Custom [FreeScout](https://freescout.net/) modules built and maintained by
 | `DOTReports` | In development | Volume, triage effectiveness and resolution reporting |
 | `DOTLog` | In development | Per-conversation event log for debugging the mail pipeline |
 | `DOTHelp` | In development | In-app handbook explaining the desk and its modules to new staff |
+| `DOTSSO` | In development | Google Workspace sign-in, restricted to existing users |
 
 ### Triage
 
@@ -68,6 +69,26 @@ behaviours they are about to notice are deliberate.
 See [`DOTHelp/README.md`](DOTHelp/README.md) for the topic list and how to add
 a page.
 
+### DOTSSO
+
+Google Workspace sign-in for staff, restricted to people who already have an
+account on the desk. The second factor comes from Workspace, which already
+enforces it, rather than being built and supported here.
+
+- **Two gates, both required** — the account must be in the Workspace (checked
+  against the signed `hd` claim, never the email domain, which a lookalike
+  domain defeats) *and* already match an active user row
+- **Never creates accounts** — an identity Google vouches for is not
+  authorisation to use this help desk
+- **Two switches** — showing the button and refusing passwords are separate, so
+  SSO can be proven to work before passwords are turned off
+- **Break-glass from a shell** — `artisan dotsso:disable` restores password
+  login without a deploy, because under enforcement a misconfiguration locks
+  out every administrator
+
+See [`DOTSSO/README.md`](DOTSSO/README.md) for setup and the security
+properties.
+
 ## Installation
 
 Modules are installed into a FreeScout instance's `Modules/` directory.
@@ -80,6 +101,7 @@ ln -s /opt/freescout-modules/DOTTriage  /path/to/freescout/Modules/DOTTriage
 ln -s /opt/freescout-modules/DOTReports /path/to/freescout/Modules/DOTReports
 ln -s /opt/freescout-modules/DOTLog     /path/to/freescout/Modules/DOTLog
 ln -s /opt/freescout-modules/DOTHelp    /path/to/freescout/Modules/DOTHelp
+ln -s /opt/freescout-modules/DOTSSO    /path/to/freescout/Modules/DOTSSO
 cd /path/to/freescout
 php artisan freescout:module-install
 php artisan freescout:clear-cache
