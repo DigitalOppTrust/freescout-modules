@@ -60,6 +60,7 @@ class TriageController extends Controller
             'counts'    => TriageDecision::countsByUser(),
             'noise'     => TriageDecision::noiseCounts(30),
             'noiseReopened' => TriageDecision::noiseReopened(30),
+            'escalation'=> Settings::group('escalation'),
             'closing'   => Settings::group('closing'),
             'closeStats'=> TriageDecision::closeCounts(30),
             'retention' => Settings::group('retention'),
@@ -132,6 +133,34 @@ class TriageController extends Controller
             'groupPeers'     => $groupPeers,
             'openCount'      => $openCount,
         ]);
+    }
+
+    /**
+     * Save the escalation settings.
+     *
+     * Changing the window does not retime clocks that are already running -
+     * each escalation stored its own window when it started, so a ticket
+     * mid-clock keeps the rule it began under. New clocks pick up the new
+     * value. That is deliberate: silently moving a deadline a ticket is
+     * already being measured against would make the audit trail dishonest.
+     */
+    public function saveEscalation(Request $request)
+    {
+        foreach (Settings::schema() as $key => $spec) {
+            if ($spec['group'] !== 'escalation') {
+                continue;
+            }
+
+            if ($spec['type'] === 'bool') {
+                // An unchecked box submits nothing, so absence means false.
+                Settings::set($key, $request->input($key) ? '1' : '0');
+            } elseif ($request->has($key)) {
+                Settings::set($key, $request->input($key));
+            }
+        }
+
+        return redirect()->route('triage.settings')
+            ->with('success', 'Escalation settings saved. Clocks already running keep the window they started with.');
     }
 
     /** Save the automatic-closing settings. */

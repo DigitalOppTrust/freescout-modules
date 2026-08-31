@@ -24,6 +24,71 @@ class Settings
     public static function schema()
     {
         return [
+            // ── Escalation ───────────────────────────────────────────
+            'escalate_after_minutes' => [
+                'type'    => 'choice',
+                'default' => 1440,
+                'env'     => 'TRIAGE_ESCALATE_AFTER',
+                'group'   => 'escalation',
+                'label'   => 'Escalate after',
+                'help'    => 'Working time an assigned ticket may go without a reply to the '
+                            .'customer before it escalates. Weekends are not counted, so a '
+                            .'ticket arriving on Friday afternoon does not escalate over the '
+                            .'weekend. Individual agents can be given a different window on '
+                            .'their own page.',
+                'choices' => [
+                    120   => '2 working hours',
+                    240   => '4 working hours',
+                    480   => '1 working day (8 hours)',
+                    1440  => '3 working days',
+                    2880  => '6 working days',
+                    7200  => '15 working days',
+                ],
+            ],
+            'reassign_after_minutes' => [
+                'type'    => 'choice',
+                'default' => 120,
+                'env'     => 'TRIAGE_REASSIGN_AFTER',
+                'group'   => 'escalation',
+                'label'   => 'Transfer ownership after',
+                'help'    => 'Once the escalation target has been notified, how long they have '
+                            .'before the ticket actually becomes theirs. This is the grace '
+                            .'period for the original assignee to pick it back up.',
+                'choices' => [
+                    30   => '30 minutes',
+                    60   => '1 hour',
+                    120  => '2 hours',
+                    240  => '4 hours',
+                    480  => '1 working day (8 hours)',
+                ],
+            ],
+            'escalation_email' => [
+                'type'    => 'bool',
+                'default' => true,
+                'env'     => null,
+                'group'   => 'escalation',
+                'label'   => 'Email the escalation target',
+                'help'    => 'On, the person a ticket escalates to is emailed as well as being '
+                            .'notified on the ticket. Off, the note on the ticket is the only '
+                            .'signal - which is easy to miss.',
+            ],
+            'max_escalation_depth' => [
+                'type'    => 'choice',
+                'default' => 3,
+                'env'     => 'TRIAGE_MAX_DEPTH',
+                'group'   => 'escalation',
+                'label'   => 'Maximum escalation hops',
+                'help'    => 'A bound on runaway escalation. Once a ticket has escalated this '
+                            .'many times it stops climbing, even if the last person also does '
+                            .'not reply.',
+                'choices' => [
+                    1 => '1 - escalate once, then stop',
+                    2 => '2',
+                    3 => '3',
+                    5 => '5',
+                ],
+            ],
+
             // ── Closing: non-support mail ────────────────────────────
             'close_noise_enabled' => [
                 'type'    => 'bool',

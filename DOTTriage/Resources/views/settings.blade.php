@@ -85,7 +85,7 @@
                     @if ($p && $p->escalate_after_minutes)
                         {{ \Modules\DOTTriage\Services\BusinessTime::describe($p->escalate_after_minutes) }}
                     @elseif ($p)
-                        <span class="triage-meta">{{ \Modules\DOTTriage\Services\BusinessTime::describe(config('triage.escalate_after_minutes')) }}</span>
+                        <span class="triage-meta">{{ \Modules\DOTTriage\Services\BusinessTime::describe(\Modules\DOTTriage\Services\Settings::get('escalate_after_minutes')) }}</span>
                     @else
                         <span class="triage-meta">—</span>
                     @endif
@@ -135,12 +135,55 @@
             <p class="triage-meta" style="margin-bottom:12px;">
                 A clock starts when a ticket is assigned and whenever the customer writes
                 back; it stops when the assignee replies. Past the agent's window the
-                escalation target is emailed; {{ \Modules\DOTTriage\Services\BusinessTime::describe(config('triage.reassign_after_minutes', 120)) }}
+                escalation target is emailed; {{ \Modules\DOTTriage\Services\BusinessTime::describe(\Modules\DOTTriage\Services\Settings::get('reassign_after_minutes')) }}
                 later, if still unanswered, the ticket transfers to them. Checked every
                 30 minutes, working time only.
                 Last 30 days: <strong>{{ $escalationStats['notified'] }}</strong> notified,
                 <strong>{{ $escalationStats['reassigned'] }}</strong> transferred.
             </p>
+
+            <form method="POST" action="{{ route('triage.escalation.save') }}" class="form-horizontal">
+                {{ csrf_field() }}
+
+                @foreach ($escalation as $key => $s)
+                    <div class="form-group">
+                        @if ($s['type'] === 'bool')
+                            <div class="col-sm-9 col-sm-offset-3">
+                                <label style="font-weight:normal;">
+                                    <input type="checkbox" name="{{ $key }}" value="1"
+                                        {{ $s['value'] ? 'checked' : '' }}>
+                                    <strong>{{ $s['label'] }}</strong>
+                                </label>
+                                <p class="help-block" style="margin-top:2px;">{{ $s['help'] }}</p>
+                            </div>
+                        @else
+                            <label class="col-sm-3 control-label">{{ $s['label'] }}</label>
+                            <div class="col-sm-4">
+                                <select name="{{ $key }}" class="form-control">
+                                    @foreach ($s['choices'] as $val => $label)
+                                        <option value="{{ $val }}"
+                                            {{ (string) $s['value'] === (string) $val ? 'selected' : '' }}>
+                                            {{ $label }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <p class="help-block">{{ $s['help'] }}</p>
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+
+                <div class="form-group" style="margin-bottom:6px;">
+                    <div class="col-sm-9 col-sm-offset-3">
+                        <button type="submit" class="btn btn-primary">Save escalation settings</button>
+                        <span class="triage-meta" style="margin-left:10px;">
+                            Clocks already running keep the window they started with.
+                        </span>
+                    </div>
+                </div>
+            </form>
+
+            <hr>
 
             @if ($escalations->isEmpty())
                 <p class="triage-meta">No tickets are on the clock right now.</p>

@@ -139,7 +139,7 @@
             <p>
                 If this agent has not replied to the customer within the window, the
                 escalation target is notified. If it is still unanswered
-                {{ config('triage.reassign_after_minutes') }} minutes later, the ticket
+                {{ \Modules\DOTTriage\Services\Settings::get('reassign_after_minutes') }} minutes later, the ticket
                 transfers to them.
             </p>
             <p>
@@ -172,7 +172,7 @@
             <div class="col-sm-4">
                 <select name="escalate_after_minutes" class="form-control">
                     <option value="">
-                        Default — {{ \Modules\DOTTriage\Services\BusinessTime::describe(config('triage.escalate_after_minutes')) }}
+                        Default — {{ \Modules\DOTTriage\Services\BusinessTime::describe(\Modules\DOTTriage\Services\Settings::get('escalate_after_minutes')) }}
                     </option>
                     @foreach ([240 => '4 hours', 480 => '8 hours', 1440 => '1 working day', 2880 => '2 working days', 4320 => '3 working days', 7200 => '5 working days'] as $mins => $label)
                         <option value="{{ $mins }}"

@@ -18,6 +18,7 @@ Route::post('/settings/profile/delete', 'TriageController@deleteProfile')->name(
 Route::get('/settings/test-connection', 'TriageController@testConnection')->name('triage.test');
 Route::get('/decisions', 'TriageController@decisions')->name('triage.decisions');
 
+Route::post('/settings/escalation', 'TriageController@saveEscalation')->name('triage.escalation.save');
 Route::post('/settings/closing', 'TriageController@saveClosing')->name('triage.closing.save');
 Route::get('/settings/closing/preview', 'TriageController@previewClosing')->name('triage.closing.preview');
 

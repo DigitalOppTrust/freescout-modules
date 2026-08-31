@@ -56,7 +56,7 @@ class Escalator
         $profile    = self::profileFor($conversation->user_id, $conversation->mailbox_id);
         $escalateTo = $profile ? (int) $profile->escalate_to_user_id : 0;
         $after      = $profile ? $profile->escalateAfter()
-                               : (int) config('triage.escalate_after_minutes', 1440);
+                               : (int) Settings::get('escalate_after_minutes');
 
         // Nobody to escalate to: the clock would tick towards nothing.
         if (!$escalateTo || $escalateTo === (int) $conversation->user_id) {
@@ -189,7 +189,7 @@ class Escalator
         }
 
         $elapsed = BusinessTime::describe($esc->minutesElapsed());
-        $grace   = BusinessTime::describe((int) config('triage.reassign_after_minutes', 120));
+        $grace   = BusinessTime::describe((int) Settings::get('reassign_after_minutes'));
 
         $this->note($conversation, sprintf(
             'Escalation — no reply to the customer for %s (window %s). %s notified; '
@@ -229,7 +229,7 @@ class Escalator
     {
         $target   = \App\User::find($esc->escalate_to_user_id);
         $assignee = \App\User::find($esc->assigned_user_id);
-        $maxDepth = (int) config('triage.max_escalation_depth', 3);
+        $maxDepth = (int) Settings::get('max_escalation_depth');
 
         if (!$target) {
             $esc->resolve();
@@ -408,7 +408,7 @@ class Escalator
      */
     protected function email($user, $conversation, $body, $subject)
     {
-        if (!config('triage.escalation_email', true) || !$user || !$user->email) {
+        if (!Settings::get('escalation_email') || !$user || !$user->email) {
             return;
         }
 

@@ -149,7 +149,7 @@ class TriageProfile extends Model
     public function escalateAfter()
     {
         return $this->escalate_after_minutes
-            ?: (int) config('triage.escalate_after_minutes', 240);
+            ?: (int) \Modules\DOTTriage\Services\Settings::get('escalate_after_minutes');
     }
 
     /**
@@ -160,7 +160,7 @@ class TriageProfile extends Model
     {
         $seen = [(int) $userId];
         $next = (int) $escalateToId;
-        $max  = (int) config('triage.max_escalation_depth', 3) + 2;
+        $max  = (int) \Modules\DOTTriage\Services\Settings::get('max_escalation_depth') + 2;
 
         for ($i = 0; $i < $max && $next; $i++) {
             if (in_array($next, $seen, true)) {

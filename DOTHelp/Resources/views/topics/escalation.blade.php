@@ -12,6 +12,13 @@
     customer writes back. It stops the moment you send the customer a reply.
 </p>
 
+<p class="dothelp-note">
+    The window is a setting, not a fixed rule. Administrators set a default for everyone at
+    Manage → Triage → Escalation, and can give an individual agent a different one on their
+    own page. If yours seems wrong for the work you do, that is a conversation worth having
+    rather than something you have to live with.
+</p>
+
 <ol class="dothelp-steps">
     <li>
         <strong>Nudge.</strong> If you have not replied within your window, your escalation

@@ -87,7 +87,7 @@ class TriageEscalation extends Model
             return false;
         }
 
-        $grace = (int) config('triage.reassign_after_minutes', 120);
+        $grace = (int) \Modules\DOTTriage\Services\Settings::get('reassign_after_minutes');
 
         return BusinessTime::minutesBetween($this->notified_at, new \DateTimeImmutable()) >= $grace;
     }

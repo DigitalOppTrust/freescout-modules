@@ -33,6 +33,25 @@ their own clock starts, one hop deeper. Depth and chain bound the hops.
 `triage:escalate --apply` runs every 30 minutes; without `--apply` it is a dry
 run listing what is due.
 
+Configured at **Manage → Triage → Escalation**:
+
+| Setting | Default | What it does |
+|---|---|---|
+| Escalate after | 3 working days | Window before an unanswered ticket escalates |
+| Transfer ownership after | 2 hours | Grace period between notifying the target and the ticket becoming theirs |
+| Email the escalation target | on | Off leaves only the note on the ticket, which is easy to miss |
+| Maximum escalation hops | 3 | Bound on runaway escalation |
+
+**A per-agent window overrides the global one.** Set it on the agent's own page
+(Manage → Triage → the agent); left blank, they use the global default. Both
+count working time only, so a ticket arriving on Friday afternoon does not
+escalate over the weekend.
+
+**Changing the window does not retime clocks that are already running.** Each
+escalation records its own window when it starts, so a ticket mid-clock keeps
+the rule it began under; new clocks pick up the new value. Moving a deadline a
+ticket is already being measured against would make the audit trail dishonest.
+
 **Reopening** — FreeScout reopens a closed ticket on any customer reply. With
 the reopen judgement on (Manage → Triage), the ticket is reopened and the model
 is asked whether the reply needs a person. If it clearly does not ("thanks",
@@ -64,3 +83,5 @@ accuracy is measured rather than assumed.
 - Hook registration is wrapped in try/catch, so a fault cannot take the site down
 - Triage runs as a queued job — an API outage never blocks email fetching
 - `TRIAGE_DAILY_LIMIT` caps API calls per day
+- Settings are validated against their own choice list, so a tampered form
+  cannot set an arbitrary escalation window
