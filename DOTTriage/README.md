@@ -37,7 +37,7 @@ Configured at **Manage → Triage → Escalation**:
 
 | Setting | Default | What it does |
 |---|---|---|
-| Escalate after | 3 working days | Window before an unanswered ticket escalates |
+| Escalate after | 1 working day | Window before an unanswered ticket escalates |
 | Transfer ownership after | 2 hours | Grace period between notifying the target and the ticket becoming theirs |
 | Email the escalation target | on | Off leaves only the note on the ticket, which is easy to miss |
 | Maximum escalation hops | 3 | Bound on runaway escalation |

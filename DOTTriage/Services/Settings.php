@@ -36,13 +36,19 @@ class Settings
                             .'ticket arriving on Friday afternoon does not escalate over the '
                             .'weekend. Individual agents can be given a different window on '
                             .'their own page.',
+                // Labels must match BusinessTime::describe(), which treats
+                // 1440 minutes as one working day - a full 24h of elapsed
+                // time with weekends skipped, not an 8-hour shift. Labelling
+                // 480 as "one working day" here would contradict every
+                // duration the module prints elsewhere.
                 'choices' => [
-                    120   => '2 working hours',
-                    240   => '4 working hours',
-                    480   => '1 working day (8 hours)',
-                    1440  => '3 working days',
-                    2880  => '6 working days',
-                    7200  => '15 working days',
+                    240   => '4 hours',
+                    480   => '8 hours',
+                    720   => '12 hours',
+                    1440  => '1 working day',
+                    2880  => '2 working days',
+                    4320  => '3 working days',
+                    7200  => '5 working days',
                 ],
             ],
             'reassign_after_minutes' => [
@@ -59,7 +65,7 @@ class Settings
                     60   => '1 hour',
                     120  => '2 hours',
                     240  => '4 hours',
-                    480  => '1 working day (8 hours)',
+                    480  => '8 hours',
                 ],
             ],
             'escalation_email' => [
