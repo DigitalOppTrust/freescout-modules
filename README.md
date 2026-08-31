@@ -112,6 +112,14 @@ Enable the modules in **Manage → Modules**.
 `deploy.sh` does all of the above, including the public asset symlinks that
 `freescout:module-install` creates.
 
+### Upgrades
+
+Modules attach to FreeScout through its hooks and are symlinked in from a
+separate git tree, so a FreeScout upgrade cannot overwrite them. The rule that
+keeps that true — **never patch core** — along with the hooks currently relied
+on and a post-upgrade checklist, is in
+[`ARCHITECTURE.md`](ARCHITECTURE.md).
+
 ### Why the `DOT` prefix
 
 FreeScout matches installed modules against its own module directory **by

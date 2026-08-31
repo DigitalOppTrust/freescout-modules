@@ -29,6 +29,12 @@ class Handbook
                 'icon'     => 'flash',
                 'audience' => 'all',
             ],
+            'signing-in' => [
+                'title'    => 'Signing in',
+                'summary'  => 'You sign in with Google. There is no password to remember, or to lose.',
+                'icon'     => 'log-in',
+                'audience' => 'all',
+            ],
             'start' => [
                 'title'    => 'Start here',
                 'summary'  => 'What this system is, who is on it, and what to do in your first week.',
@@ -163,7 +169,7 @@ class Handbook
                 ],
                 'cta'     => 'Start the walkthrough',
                 'parts'   => [
-                    'start', 'ticket-lifecycle', 'replying', 'folders',
+                    'signing-in', 'start', 'ticket-lifecycle', 'replying', 'folders',
                     'triage', 'auto-close', 'daily-work', 'escalation',
                 ],
             ],

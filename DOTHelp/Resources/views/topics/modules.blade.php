@@ -1,5 +1,5 @@
 <p class="dothelp-intro">
-    Six modules run on this desk, all prefixed <code>DOT</code>. Only one of them changes your
+    Eight modules run on this desk, all prefixed <code>DOT</code>. Only one of them changes your
     daily work. This page exists so that when someone says "that's DOTLog", you know whether it
     concerns you.
 </p>
@@ -18,6 +18,28 @@
             <td>
                 <span class="dothelp-yes">Yes — daily.</span> Its notes appear on your tickets.
                 <a href="{{ route('dothelp.topic', 'triage') }}">Read the page</a>.
+            </td>
+        </tr>
+        <tr>
+            <td><strong>DOTSSO</strong></td>
+            <td>
+                How you sign in. Your DOT Google account replaces a help desk password —
+                see <a href="{{ route('dothelp.topic', 'signing-in') }}">Signing in</a>.
+            </td>
+            <td>
+                <span class="dothelp-yes">Every time you sign in.</span> There is nothing to
+                configure, but it is why there is no password box.
+            </td>
+        </tr>
+        <tr>
+            <td><strong>DOTRatings</strong></td>
+            <td>
+                Emails the customer when their ticket closes, asking for a 1–5 star rating.
+                Replying to that email reopens the ticket.
+            </td>
+            <td>
+                <span class="dothelp-no">No.</span> It sends itself. Worth knowing because a
+                reopened ticket is often a reply to this email, not a new problem.
             </td>
         </tr>
         <tr>
