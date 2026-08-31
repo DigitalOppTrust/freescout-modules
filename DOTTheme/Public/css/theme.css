@@ -311,6 +311,33 @@ body.body-login {
     color: var(--dot-brand-dark);
 }
 
+/* ── Sign-in banner ──────────────────────────────────────────
+   Core renders the login banner with a hardcoded height="36". FreeScout's own
+   mark is 184x36 (about 5:1); the DOT logo is 236x88 (about 2.7:1), so at the
+   same height it comes out roughly half the width and reads as small on an
+   otherwise empty page. Override the attribute with a width instead and let
+   the height follow the aspect ratio.                                        */
+
+.banner img {
+    height: auto !important;
+    width: 150px;
+    max-width: 60%;
+}
+
+/* The default 50px gap below the banner was tuned for a short wordmark; the
+   taller DOT mark needs a little less. */
+.banner {
+    margin-bottom: 36px;
+}
+
+/* ── Footer ──────────────────────────────────────────────────
+   Says who the desk is for rather than what it runs on. Slightly darker than
+   core's #b4c0ca, which was too faint to read as a statement of purpose.     */
+
+.footer {
+    color: #8a97a3;
+}
+
 /* ── Print ───────────────────────────────────────────────────
    Tickets get printed and attached to case notes; no point wasting ink on
    the branding.                                                             */

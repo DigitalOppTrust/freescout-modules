@@ -64,6 +64,31 @@ class ThemeServiceProvider extends ServiceProvider
             return asset('modules/dottheme/img/dot-logo.svg');
         });
 
+        // The header logo above only renders for signed-in users. The login
+        // page draws its own banner (resources/views/auth/banner.blade.php)
+        // through a separate filter, so without this the sign-in page - the
+        // first thing anyone sees - still showed FreeScout's mark.
+        \Eventy::addFilter('login.banner', function ($default) {
+            return asset('modules/dottheme/img/dot-logo.svg');
+        });
+
+        // Replace the footer. Returning a non-empty string from this filter
+        // makes core use it instead of its own copyright line, so this says
+        // what the desk is and who it is for rather than what it runs on.
+        //
+        // FreeScout remains credited in the About page and in the source; this
+        // is a staff-facing sign-in page, not an attribution notice.
+        \Eventy::addFilter('footer.text', function ($default) {
+            $text = trim((string) config('dottheme.footer_text'));
+
+            if ($text === '') {
+                return $default;
+            }
+
+            // The filter's output is echoed unescaped by core, so escape here.
+            return e($text);
+        });
+
         // Inject the stylesheet into <head>, after FreeScout's own CSS so
         // these rules win on specificity alone.
         \Eventy::addAction('layout.head', function () {
@@ -78,7 +103,16 @@ class ThemeServiceProvider extends ServiceProvider
 
             echo '<link rel="preload" as="font" type="font/woff2" crossorigin href="'.$r400.'">'."\n";
             echo '<link rel="preload" as="font" type="font/woff2" crossorigin href="'.$r600.'">'."\n";
-            echo '<link rel="stylesheet" href="'.$css.'?v='.config('dottheme.version', '1').'">'."\n";
+            // Cache-bust on the file's own mtime. This previously read a
+            // 'dottheme.version' config key that does not exist, so it always
+            // emitted ?v=1 and every CSS change stayed behind whatever the
+            // browser had cached - the same trap DOTHelp hit.
+            $path = public_path('modules/dottheme/css/theme.css');
+            if (file_exists($path)) {
+                $css .= '?v='.filemtime($path);
+            }
+
+            echo '<link rel="stylesheet" href="'.$css.'">'."\n";
 
             // Colours the browser chrome uses on mobile.
             echo '<meta name="theme-color" content="'.e(config('dottheme.brand')).'">'."\n";
