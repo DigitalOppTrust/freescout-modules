@@ -38,6 +38,18 @@ installing this module sends nobody anything until an administrator turns
 Mail closed as *not a support request* (newsletters, auto-replies, bounces) is
 never emailed regardless of settings — replying confirms the address is real.
 
+## The ratings list
+
+Manage → Ratings → *Recent ratings* lists every rating received, newest first.
+The **Handled by** column names the agents involved in resolving that ticket:
+anyone who sent a published reply to the customer, plus whoever closed it if
+they never replied. Internal notes and drafts do not count, because the
+customer never saw them; an automatic close (inactivity or "looked resolved")
+credits nobody for the close itself, so those rows show only the repliers.
+
+The names are gathered with one query per page (`Rating::handlersFor()`), not
+one per row.
+
 ## Safety notes for future work
 
 - **The GET must never record a rating.** Mail scanners fetch every link in an

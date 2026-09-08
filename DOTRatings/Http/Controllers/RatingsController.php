@@ -76,8 +76,9 @@ class RatingsController extends Controller
             ->paginate(50);
 
         return view('dotratings::list', [
-            'ratings' => $ratings,
-            'summary' => Rating::summary(30),
+            'ratings'  => $ratings,
+            'summary'  => Rating::summary(30),
+            'handlers' => Rating::handlersFor($ratings->pluck('conversation_id')->all()),
         ]);
     }
 }

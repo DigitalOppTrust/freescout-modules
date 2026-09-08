@@ -27,6 +27,7 @@
                     <th style="width:120px;">Rating</th>
                     <th style="width:110px;">Ticket</th>
                     <th>Comment</th>
+                    <th style="width:180px;">Handled by</th>
                     <th style="width:140px;">Closed as</th>
                     <th style="width:150px;">Rated</th>
                 </tr>
@@ -48,6 +49,15 @@
                             @endif
                         </td>
                         <td>{{ $r->comment ?: '—' }}</td>
+                        <td>
+                            @if (!empty($handlers[$r->conversation_id]))
+                                @foreach ($handlers[$r->conversation_id] as $u)
+                                    <a href="{{ route('users.profile', ['id' => $u->id]) }}">{{ $u->getFullName() }}</a>@if (!$loop->last), @endif
+                                @endforeach
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </td>
                         <td>
                             {{ ['manual'     => 'Closed by an agent',
                                 'inactivity' => 'No customer reply',

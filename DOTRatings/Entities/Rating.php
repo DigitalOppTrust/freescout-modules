@@ -56,6 +56,72 @@ class Rating extends Model
             ->exists();
     }
 
+    /**
+     * The agents involved in resolving each of the given conversations.
+     *
+     * "Involved" means: sent a published reply to the customer, or closed the
+     * ticket. Notes, drafts and automatic closures (closed_by_user_id NULL)
+     * do not count - the first two are invisible to the customer, and the
+     * third has nobody to credit.
+     *
+     * One query for the whole page rather than one per row. Returns
+     * [conversation_id => [User, ...]] in order of first involvement, with
+     * the closer last if they never replied.
+     */
+    public static function handlersFor(array $conversationIds)
+    {
+        $conversationIds = array_values(array_filter(array_map('intval', $conversationIds)));
+        if (!$conversationIds) {
+            return [];
+        }
+
+        $replies = \DB::table('threads')
+            ->whereIn('conversation_id', $conversationIds)
+            ->where('type', \App\Thread::TYPE_MESSAGE)
+            ->where('state', \App\Thread::STATE_PUBLISHED)
+            ->whereNotNull('created_by_user_id')
+            ->orderBy('created_at')
+            ->get(['conversation_id', 'created_by_user_id']);
+
+        $closers = \DB::table('conversations')
+            ->whereIn('id', $conversationIds)
+            ->whereNotNull('closed_by_user_id')
+            ->pluck('closed_by_user_id', 'id');
+
+        $ids = [];
+        foreach ($replies as $row) {
+            $ids[$row->conversation_id][$row->created_by_user_id] = true;
+        }
+        foreach ($closers as $conversationId => $userId) {
+            $ids[$conversationId][$userId] = true;
+        }
+
+        if (!$ids) {
+            return [];
+        }
+
+        $userIds = [];
+        foreach ($ids as $perConversation) {
+            $userIds += $perConversation;
+        }
+
+        $users = \App\User::whereIn('id', array_keys($userIds))
+            ->get()
+            ->keyBy('id');
+
+        $out = [];
+        foreach ($ids as $conversationId => $perConversation) {
+            $out[$conversationId] = [];
+            foreach (array_keys($perConversation) as $userId) {
+                if (isset($users[$userId])) {
+                    $out[$conversationId][] = $users[$userId];
+                }
+            }
+        }
+
+        return $out;
+    }
+
     /** Headline numbers for the settings page and the ratings list. */
     public static function summary($days = 30)
     {
