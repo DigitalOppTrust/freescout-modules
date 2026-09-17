@@ -28,8 +28,10 @@
             <td><strong>Looks resolved</strong></td>
             <td>Tickets a model reads and judges finished.</td>
             <td>
-                An agent reply, at least <strong>one working day</strong> of quiet, and high
-                model confidence.
+                An agent reply and high model confidence, plus quiet: <strong>one working
+                day</strong> when the agent spoke last, or about <strong>an hour</strong> when
+                the customer signed off ("it is, thank you") and there is nothing left to
+                wait for.
             </td>
         </tr>
     </tbody>
@@ -37,10 +39,10 @@
 
 <div class="dothelp-callout">
     <p>
-        <strong>None of these emails the customer.</strong> Every close leaves an internal note
-        saying which rule fired and why, and the note itself says so:
-        <em>"The customer was not emailed. If they reply, this conversation reopens
-        automatically."</em>
+        <strong>Every close leaves an internal note</strong> saying which rule fired and why.
+        Closing as noise emails nobody. Closing for inactivity or as resolved sends the
+        customer the usual rating request, the same one a manual close sends — so a wrong
+        close is visible to them, and the reopen link in that email is how they answer it.
     </p>
     <p class="dothelp-callout-last">
         That is the whole safety argument. The cost of a wrong close is a customer who thinks
@@ -57,8 +59,10 @@
         the customer losing interest, it is us failing to respond. Closing it would hide that.
     </li>
     <li>
-        <strong>A ticket where the customer replied last.</strong> The ball is with us by
-        definition.
+        <strong>A ticket where the customer replied last and said something that needs
+        answering.</strong> A question, a new problem or a "thanks, but one more thing" leaves
+        the ball with us. A plain sign-off does not, and the resolved rule may close it — the
+        model reads the message rather than assuming from who spoke last.
     </li>
 </ul>
 
@@ -74,8 +78,9 @@
         outgoing message to the customer starts the clock.
     </li>
     <li>
-        <strong>Did the customer reply after that?</strong> If the last message is theirs, no
-        rule will touch it — and correctly so.
+        <strong>Did the customer reply after that?</strong> If their reply asked anything, the
+        inactivity rule will not touch it — correctly so. The resolved rule still looks, and
+        closes only if the model reads the reply as a sign-off with nothing outstanding.
     </li>
     <li>
         <strong>Count the working days, not the calendar days.</strong> This is the usual
@@ -84,8 +89,8 @@
     </li>
     <li>
         <strong>Has the quiet period actually elapsed?</strong> The resolved rule needs a full
-        working day of silence before it will even ask the model. A reply sent an hour ago is
-        not eligible for anything.
+        working day of silence after an agent reply before it will even ask the model. The
+        exception is a customer sign-off, which only waits about an hour.
     </li>
     <li>
         <strong>Wait for the next sweep.</strong> It runs hourly, on the hour. Becoming eligible

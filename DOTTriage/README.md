@@ -62,6 +62,20 @@ that stays open is routed afresh on the reply that reopened it.
 **Closing** — hourly sweep: backlog noise, inactivity after an agent reply,
 and (optionally) tickets the model judges resolved. See Manage → Triage.
 
+The resolved pass is the only one that reads a conversation where the customer
+had the last word. The inactivity pass skips those on turn order — the ball is
+with us — but applying that rule to the resolved pass discarded its best
+evidence, since an explicit "it is, thank you" is the clearest sign a ticket is
+finished. Whether a final customer message is a sign-off or a fresh question is
+a reading task, so the model decides it. Those get a much shorter quiet window
+(`resolved_confirmed_quiet_minutes`, default 1 hour) than a thread that simply
+went silent, because a conversation the customer has closed off has nothing
+left to wait for.
+
+Quiet is measured from the last message in **either** direction. Measuring from
+the agent's older reply would let a brand-new customer question through as soon
+as the original window elapsed.
+
 **Review** — every decision is recorded with its reasoning, whether a human
 later overrode it, and whether a human reopened something it closed, so
 accuracy is measured rather than assumed.
