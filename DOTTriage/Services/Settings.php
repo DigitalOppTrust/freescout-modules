@@ -162,6 +162,23 @@ class Settings
                     4320  => '3 working days',
                 ],
             ],
+            'resolved_confirmed_quiet_minutes' => [
+                'type'    => 'choice',
+                'default' => 60,
+                'env'     => 'TRIAGE_RESOLVED_CONFIRMED_QUIET',
+                'group'   => 'closing',
+                'label'   => 'Judge customer sign-offs after',
+                'help'    => 'When the customer has the last word - "thanks, that works" - there '
+                            .'is nothing left to wait for, so the model is asked much sooner than '
+                            .'the window above. It still has to judge the message a sign-off and '
+                            .'not a new request, and it still has to clear the confidence bar.',
+                'choices' => [
+                    30   => '30 minutes',
+                    60   => '1 hour',
+                    120  => '2 hours',
+                    480  => '8 working hours',
+                ],
+            ],
             'resolved_confidence' => [
                 'type'    => 'choice',
                 'default' => '0.85',

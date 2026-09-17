@@ -188,8 +188,13 @@ class AutoCloser
      *
      * Deliberately narrow. A conversation only reaches the model if:
      *   - an agent has actually replied (there is something to judge)
-     *   - the customer has been quiet for a while (not mid-exchange)
-     *   - it is not already covered by the inactivity rule
+     *   - the thread has been quiet a while, so it is not judged mid-exchange
+     *
+     * Quiet is measured from the last message in either direction, and how
+     * much is required depends on who sent it. An agent reply with no response
+     * waits out the full window. A customer sign-off waits only
+     * resolved_confirmed_quiet_minutes, because a conversation the customer
+     * has closed off has nothing left to wait for.
      *
      * And the model must be confident AND say it is resolved. Anything
      * ambiguous is left open, because the cost of a wrong close is much
@@ -201,11 +206,12 @@ class AutoCloser
             return ['skipped' => 'Closing resolved tickets is switched off in Manage → Triage.'];
         }
 
-        $limit      = min($this->cap($limit), 25);
-        $minQuiet   = (int) Settings::get('resolved_min_quiet_minutes');
-        $threshold  = (float) Settings::get('resolved_confidence');
-        $client     = new ClaudeClient();
-        $results    = [];
+        $limit          = min($this->cap($limit), 25);
+        $minQuiet       = (int) Settings::get('resolved_min_quiet_minutes');
+        $confirmedQuiet = (int) Settings::get('resolved_confirmed_quiet_minutes');
+        $threshold      = (float) Settings::get('resolved_confidence');
+        $client         = new ClaudeClient();
+        $results        = [];
 
         if (!$client->isConfigured()) {
             return ['skipped' => 'No Claude API key configured.'];
@@ -242,20 +248,35 @@ class AutoCloser
                 ->orderBy('created_at', 'desc')
                 ->first();
 
-            if ($lastCustomer && $lastCustomer->created_at > $lastAgent->created_at) {
-                continue;
-            }
+            // Unlike the inactivity pass, a customer having the last word does
+            // not disqualify the conversation here. "Thanks, that works" is the
+            // clearest resolution signal there is, and skipping on turn order
+            // alone threw away exactly the cases this pass is best at - it
+            // could only ever close on the weaker signal of the customer going
+            // silent. Whether the last message is a sign-off or a fresh
+            // question is a reading task, so it goes to the model rather than
+            // being guessed from who spoke last.
+            $customerLast = $lastCustomer && $lastCustomer->created_at > $lastAgent->created_at;
+
+            // Quiet runs from the most recent message either way: if the
+            // customer replied last, waiting on the agent's older reply would
+            // let a brand-new question through the moment the original window
+            // had passed.
+            $since = $customerLast ? $lastCustomer->created_at : $lastAgent->created_at;
 
             $quiet = BusinessTime::minutesBetween(
-                new \DateTimeImmutable($lastAgent->created_at),
+                new \DateTimeImmutable($since),
                 new \DateTimeImmutable()
             );
 
-            if ($quiet < $minQuiet) {
+            // A sign-off needs no settling time - there is nobody left to wait
+            // for - so it gets a much shorter window than a conversation that
+            // simply went silent.
+            if ($quiet < ($customerLast ? $confirmedQuiet : $minQuiet)) {
                 continue;
             }
 
-            $verdict = $this->judge($client, $c);
+            $verdict = $this->judge($client, $c, $customerLast);
 
             if (!$verdict['resolved'] || $verdict['confidence'] < $threshold) {
                 continue;
@@ -299,8 +320,15 @@ class AutoCloser
         return Settings::get('close_protect_assigned') && $conversation->user_id;
     }
 
-    /** Ask the model whether the exchange is finished. */
-    protected function judge(ClaudeClient $client, $conversation)
+    /**
+     * Ask the model whether the exchange is finished.
+     *
+     * $customerLast says the final message is the customer's, which is the one
+     * case where the decision turns entirely on reading that message: a
+     * sign-off ends the conversation, a follow-up question restarts it, and
+     * they often sit in the same sentence ("thanks, but one more thing").
+     */
+    protected function judge(ClaudeClient $client, $conversation, $customerLast = false)
     {
         $lines = [];
         foreach ($conversation->threads()->orderBy('created_at', 'asc')->limit(20)->get() as $t) {
@@ -330,6 +358,17 @@ class AutoCloser
             ."- you are unsure\n\n"
             ."Closing an unresolved conversation makes a customer think they were\n"
             ."ignored. When in doubt, answer false.";
+
+        if ($customerLast) {
+            $system .= "\n\nThe final message is the CUSTOMER's. Judge that message:\n"
+                ."- Pure acknowledgement with nothing outstanding - \"it is, thank you\",\n"
+                ."  \"that works\", \"perfect, thanks\" - is resolved. Say true.\n"
+                ."- Thanks followed by anything further - a new request, a remaining\n"
+                ."  problem, a question, \"but\", \"one more thing\", \"however\" - is NOT\n"
+                ."  resolved. Say false, however warmly it is worded.\n"
+                ."- If the agent's previous message asked a question, check the customer\n"
+                ."  actually answered it before calling this resolved.";
+        }
 
         $result = $client->complete($system, implode("\n\n", $lines), 300);
 
