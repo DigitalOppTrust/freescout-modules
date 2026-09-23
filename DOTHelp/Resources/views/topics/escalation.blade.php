@@ -1,7 +1,7 @@
 <p class="dothelp-intro">
     Escalation is what chases a ticket that has been assigned but not answered. It runs
-    automatically, in working time, and it does two things in order: it tells someone, then it
-    moves the ticket.
+    automatically, in working time, and it does three things in order: it reminds you, it tells
+    someone else, then it moves the ticket.
 </p>
 
 <h3>How it works</h3>
@@ -21,9 +21,14 @@
 
 <ol class="dothelp-steps">
     <li>
-        <strong>Nudge.</strong> If you have not replied within your window, your escalation
-        target gets an email and a <em>Triage</em> note appears on the ticket saying so. The
-        ticket is still yours.
+        <strong>Remind.</strong> If you have not replied within your window, you get an email
+        saying the ticket is still unanswered, and a <em>Triage</em> note on the ticket records
+        it. Reply to the customer, or close the ticket if nothing more is needed — either stops
+        the reminders. By default you are reminded three times, three working days apart.
+    </li>
+    <li>
+        <strong>Nudge.</strong> One interval after your last reminder, your escalation target
+        gets an email and a note appears on the ticket saying so. The ticket is still yours.
     </li>
     <li>
         <strong>Transfer.</strong> If it is still unanswered a couple of hours later, ownership
@@ -71,7 +76,10 @@
     <tbody>
         <tr>
             <td>A ticket is assigned and nobody has replied</td>
-            <td>Escalation, as above — provided the assignee's profile names a target.</td>
+            <td>
+                Escalation, as above. If the assignee's profile names no target they are still
+                reminded, but the ticket never moves.
+            </td>
         </tr>
         <tr>
             <td>Nobody has answered a ticket and nobody owns it</td>

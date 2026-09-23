@@ -30,12 +30,12 @@ class Settings
                 'default' => 1440,
                 'env'     => 'TRIAGE_ESCALATE_AFTER',
                 'group'   => 'escalation',
-                'label'   => 'Escalate after',
+                'label'   => 'Reply window',
                 'help'    => 'Working time an assigned ticket may go without a reply to the '
-                            .'customer before it escalates. Weekends are not counted, so a '
-                            .'ticket arriving on Friday afternoon does not escalate over the '
-                            .'weekend. Individual agents can be given a different window on '
-                            .'their own page.',
+                            .'customer. When it runs out the assignee is reminded, and the '
+                            .'ticket escalates after the last reminder (or straight away if '
+                            .'reminders are off). Weekends are not counted. Individual agents '
+                            .'can be given a different window on their own page.',
                 // Labels must match BusinessTime::describe(), which treats
                 // 1440 minutes as one working day - a full 24h of elapsed
                 // time with weekends skipped, not an 8-hour shift. Labelling
@@ -49,6 +49,40 @@ class Settings
                     2880  => '2 working days',
                     4320  => '3 working days',
                     7200  => '5 working days',
+                ],
+            ],
+            'reminder_count' => [
+                'type'    => 'choice',
+                'default' => 3,
+                'env'     => null,
+                'group'   => 'escalation',
+                'label'   => 'Reminders before escalating',
+                'help'    => 'How many times the assignee is emailed that the ticket is still '
+                            .'unanswered and needs a reply or closing. The first goes when the '
+                            .'reply window runs out. Agents with no escalation target are '
+                            .'still reminded; their tickets just never escalate.',
+                'choices' => [
+                    0 => 'None - escalate as soon as the window runs out',
+                    1 => '1',
+                    2 => '2',
+                    3 => '3',
+                    5 => '5',
+                ],
+            ],
+            'reminder_interval_minutes' => [
+                'type'    => 'choice',
+                'default' => 4320,
+                'env'     => null,
+                'group'   => 'escalation',
+                'label'   => 'Time between reminders',
+                'help'    => 'Working time between reminders, and between the last reminder and '
+                            .'escalation. Three reminders three working days apart means a '
+                            .'ticket escalates nine working days after its reply window.',
+                'choices' => [
+                    1440 => '1 working day',
+                    2880 => '2 working days',
+                    4320 => '3 working days',
+                    7200 => '5 working days',
                 ],
             ],
             'reassign_after_minutes' => [

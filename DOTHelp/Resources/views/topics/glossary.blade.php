@@ -40,7 +40,7 @@
     <dd>Plain wall-clock time — what the customer actually experienced. Reports show both this and working time side by side.</dd>
 
     <dt>Escalation</dt>
-    <dd>Nudges, then reassigns, an assigned ticket that has had no reply within its window. Runs every 30 minutes in working time.</dd>
+    <dd>Reminds the assignee, then nudges their escalation target, then reassigns, an assigned ticket that has had no reply within its window. Runs every 30 minutes in working time.</dd>
 
     <dt>Retention</dt>
     <dd>Permanent deletion of old closed tickets. Distinct from closing, irreversible, switched off here.</dd>

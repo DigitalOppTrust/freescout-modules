@@ -6,7 +6,7 @@ use Modules\DOTTriage\Entities\TriageProfile;
 use Modules\DOTTriage\Entities\TriageEscalation;
 
 /**
- * The escalation clock: nudge, then transfer, a ticket nobody has answered.
+ * The escalation clock: remind, nudge, then transfer, a ticket nobody has answered.
  *
  * One row per conversation in triage_escalations, active while the assignee
  * owes the customer a reply. The clock starts when a ticket is assigned (by
@@ -14,12 +14,20 @@ use Modules\DOTTriage\Entities\TriageEscalation;
  * stops when the assignee replies or the ticket closes. The hourly sweep
  * walks the active rows and acts on the ones past their window:
  *
- *   stage 1  the profile's escalation target is emailed and a note is left
+ *   stage 0  the assignee is reminded, reminder_count times, an interval
+ *            apart; the first when the window runs out
+ *   stage 1  one interval after the last reminder (or at the window, with
+ *            reminders off) the profile's escalation target is emailed and a
+ *            note is left
  *   stage 2  after a further grace period, ownership transfers to the target
  *            and a new clock starts for them, one hop deeper in the chain
  *
  * Working time throughout, so nothing escalates over a weekend. Depth and
  * chain bound the hops so a ticket can never ping-pong between two people.
+ *
+ * An assignee with nobody to escalate to still gets a clock, with
+ * escalate_to_user_id null, so they are reminded; it simply never reaches
+ * stage 1.
  *
  * Until 2026-08-27 none of this ran: the table, entity and settings existed
  * but nothing ever created a row. Every profile's "escalate to" was a
@@ -39,8 +47,8 @@ class Escalator
      *
      * Idempotent per conversation: a second call replaces the row, which is
      * what a reassignment or a fresh customer reply needs. Returns null when
-     * there is nothing to time - no assignee, ticket not open, or the
-     * assignee's profile names nobody to escalate to.
+     * there is nothing to time - no assignee, ticket not open, or nobody to
+     * escalate to and reminders switched off.
      */
     public static function start($conversation, $depth = 0, $chain = null)
     {
@@ -58,15 +66,16 @@ class Escalator
         $after      = $profile ? $profile->escalateAfter()
                                : (int) Settings::get('escalate_after_minutes');
 
-        // Nobody to escalate to: the clock would tick towards nothing.
-        if (!$escalateTo || $escalateTo === (int) $conversation->user_id) {
-            self::stop($conversation->id);
-            return null;
+        // Nobody to escalate to, or only back to someone already in this
+        // chain: the clock can still remind the assignee, but never escalates.
+        $chainIds = $chain ? array_map('intval', array_filter(explode(',', $chain))) : [];
+        if ($escalateTo === (int) $conversation->user_id || in_array($escalateTo, $chainIds, true)) {
+            $escalateTo = 0;
         }
 
-        // Never escalate back to someone already in this chain.
-        $chainIds = $chain ? array_map('intval', array_filter(explode(',', $chain))) : [];
-        if (in_array($escalateTo, $chainIds, true)) {
+        $reminders = (int) Settings::get('reminder_count');
+
+        if (!$escalateTo && !$reminders) {
             self::stop($conversation->id);
             return null;
         }
@@ -77,7 +86,11 @@ class Escalator
                 'assigned_user_id'       => (int) $conversation->user_id,
                 'clock_started_at'       => now(),
                 'escalate_after_minutes' => $after,
-                'escalate_to_user_id'    => $escalateTo,
+                'escalate_to_user_id'    => $escalateTo ?: null,
+                'reminder_count'         => $reminders,
+                'reminder_interval_minutes' => (int) Settings::get('reminder_interval_minutes'),
+                'reminders_sent'         => 0,
+                'last_reminded_at'       => null,
                 'notified_at'            => null,
                 'reassigned_at'          => null,
                 'depth'                  => (int) $depth,
@@ -171,10 +184,73 @@ class Escalator
                 if (!$dryRun) {
                     $this->notify($esc, $c);
                 }
+                continue;
+            }
+
+            if ($esc->isDueForReminder()) {
+                $results[] = $this->describe($esc, $c, 'remind');
+                if (!$dryRun) {
+                    $this->remind($esc, $c);
+                }
             }
         }
 
         return $results;
+    }
+
+    /** Stage 0: tell the assignee the ticket is still waiting on them. */
+    protected function remind(TriageEscalation $esc, $conversation)
+    {
+        $assignee = \App\User::find($esc->assigned_user_id);
+
+        if (!$assignee) {
+            $esc->resolve();
+            return;
+        }
+
+        $n       = (int) $esc->reminders_sent + 1;
+        $of      = (int) $esc->reminder_count;
+        $elapsed = BusinessTime::describe($esc->minutesElapsed());
+        $next    = BusinessTime::describe($esc->reminder_interval_minutes);
+        $target  = $esc->escalate_to_user_id ? \App\User::find($esc->escalate_to_user_id) : null;
+
+        if ($n < $of) {
+            $then = 'Next reminder in '.$next.'.';
+        } elseif ($target) {
+            $then = 'Last reminder: the ticket escalates to '.$target->getFullName().' in '.$next.'.';
+        } else {
+            $then = 'Last reminder: nobody is set up to escalate to, so this ticket will not be chased again.';
+        }
+
+        $this->note($conversation, sprintf(
+            'Reminder %d of %d sent to %s — no reply to the customer for %s. %s',
+            $n, $of, $assignee->getFullName(), $elapsed, $then
+        ));
+
+        $this->email($assignee, $conversation, sprintf(
+            "This ticket is assigned to you and the customer has had no reply for %s.\n\n"
+            ."Please reply to the customer, or close the ticket if nothing more is needed.\n\n"
+            ."Reminder %d of %d. %s\n\n"
+            ."#%s  %s\nFrom: %s\n\n%s",
+            $elapsed,
+            $n,
+            $of,
+            $then,
+            $conversation->number,
+            $conversation->subject,
+            $conversation->customer_email,
+            $this->link($conversation)
+        ), 'Reminder: #'.$conversation->number.' '.$conversation->subject.' is still unanswered', true);
+
+        $esc->reminders_sent   = $n;
+        $esc->last_reminded_at = now();
+        $esc->save();
+
+        $this->dotlog('triage.reminded', 'Reminder '.$n.' of '.$of.' sent to '.$assignee->getFullName()
+            .' after '.$elapsed.' without a reply', $conversation, ['user_id' => $assignee->id]);
+
+        \Log::info('[Triage] escalation reminder '.$n.'/'.$of.': conversation '.$conversation->id
+            .' -> user '.$assignee->id);
     }
 
     /** Stage 1: tell the escalation target, leave the ticket where it is. */
@@ -361,8 +437,9 @@ class Escalator
                 continue;   // answered, or nothing to answer
             }
 
+            // Mirrors start(): no target is fine as long as there are reminders.
             $profile = self::profileFor($c->user_id, $c->mailbox_id);
-            if (!$profile || !$profile->escalate_to_user_id) {
+            if ((!$profile || !$profile->escalate_to_user_id) && !(int) Settings::get('reminder_count')) {
                 continue;
             }
 
@@ -387,17 +464,19 @@ class Escalator
 
     protected function describe(TriageEscalation $esc, $conversation, $action)
     {
-        $target = \App\User::find($esc->escalate_to_user_id);
+        $target = $esc->escalate_to_user_id ? \App\User::find($esc->escalate_to_user_id) : null;
 
         return [
             'action'   => $action,
             'number'   => $conversation->number,
             'subject'  => $conversation->subject,
             'assignee' => optional(\App\User::find($esc->assigned_user_id))->getFullName(),
-            'target'   => $target ? $target->getFullName() : '?',
+            'target'   => $target ? $target->getFullName() : '—',
             'elapsed'  => BusinessTime::describe($esc->minutesElapsed()),
             'window'   => BusinessTime::describe($esc->escalate_after_minutes),
             'depth'    => $esc->depth,
+            'reminder' => $action === 'remind'
+                ? ((int) $esc->reminders_sent + 1).'/'.(int) $esc->reminder_count : null,
         ];
     }
 
@@ -405,10 +484,14 @@ class Escalator
      * Email one person directly. Not the subscription pipeline: that sends
      * only what each user subscribed to, and "someone else's ticket is
      * stuck" is not one of its events. Plain text, system mail settings.
+     *
+     * $always skips the escalation_email switch, which is about emailing the
+     * target. A reminder is nothing but its email; the note alone would sit
+     * on a ticket the assignee is already not looking at.
      */
-    protected function email($user, $conversation, $body, $subject)
+    protected function email($user, $conversation, $body, $subject, $always = false)
     {
-        if (!Settings::get('escalation_email') || !$user || !$user->email) {
+        if ((!$always && !Settings::get('escalation_email')) || !$user || !$user->email) {
             return;
         }
 

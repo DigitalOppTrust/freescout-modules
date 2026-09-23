@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 use Modules\DOTTriage\Services\Escalator;
 
 /**
- * Nudge, then transfer, tickets whose assignee has gone quiet.
+ * Remind, nudge, then transfer, tickets whose assignee has gone quiet.
  *
  * Defaults to a dry run, like triage:sweep: the first thing anyone wants to
  * know about an escalation rule is who it would chase right now.
@@ -14,7 +14,7 @@ use Modules\DOTTriage\Services\Escalator;
 class TriageEscalate extends Command
 {
     protected $signature = 'triage:escalate
-                            {--apply : Actually notify and transfer. Without this it is a dry run.}
+                            {--apply : Actually remind, notify and transfer. Without this it is a dry run.}
                             {--seed : Start clocks for tickets already assigned and unanswered, then stop}
                             {--limit=100 : Maximum escalations to act on per run}';
 
@@ -44,9 +44,10 @@ class TriageEscalate extends Command
         $rows = (new Escalator())->sweep(!$apply, (int) $this->option('limit'));
 
         foreach ($rows as $r) {
-            $this->line(sprintf('  %-8s #%-5s %-34s %s -> %s  (quiet %s, window %s, hop %d)',
+            $this->line(sprintf('  %-8s #%-5s %-34s %s -> %s  (quiet %s, window %s, hop %d%s)',
                 $r['action'], $r['number'], mb_substr((string) $r['subject'], 0, 32),
-                $r['assignee'] ?: '?', $r['target'], $r['elapsed'], $r['window'], $r['depth']));
+                $r['assignee'] ?: '?', $r['target'], $r['elapsed'], $r['window'], $r['depth'],
+                $r['reminder'] ? ', reminder '.$r['reminder'] : ''));
         }
 
         $this->line('');

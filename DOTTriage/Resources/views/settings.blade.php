@@ -134,11 +134,13 @@
         <div class="panel-body">
             <p class="triage-meta" style="margin-bottom:12px;">
                 A clock starts when a ticket is assigned and whenever the customer writes
-                back; it stops when the assignee replies. Past the agent's window the
+                back; it stops when the assignee replies. Past the agent's reply window the
+                assignee is reminded; one interval after the last reminder the
                 escalation target is emailed; {{ \Modules\DOTTriage\Services\BusinessTime::describe(\Modules\DOTTriage\Services\Settings::get('reassign_after_minutes')) }}
                 later, if still unanswered, the ticket transfers to them. Checked every
                 30 minutes, working time only.
-                Last 30 days: <strong>{{ $escalationStats['notified'] }}</strong> notified,
+                Last 30 days: <strong>{{ $escalationStats['reminded'] }}</strong> reminded,
+                <strong>{{ $escalationStats['notified'] }}</strong> notified,
                 <strong>{{ $escalationStats['reassigned'] }}</strong> transferred.
             </p>
 
@@ -177,7 +179,7 @@
                     <div class="col-sm-9 col-sm-offset-3">
                         <button type="submit" class="btn btn-primary">Save escalation settings</button>
                         <span class="triage-meta" style="margin-left:10px;">
-                            Clocks already running keep the window they started with.
+                            Clocks already running keep the window and reminders they started with.
                         </span>
                     </div>
                 </div>
@@ -214,8 +216,10 @@
                             <td>
                                 @if ($e->notified_at)
                                     <span class="label label-warning">notified {{ $e->notified_at->diffForHumans() }}</span>
-                                @elseif ($e->isDueForNotify())
+                                @elseif ($e->isDueForNotify() || $e->isDueForReminder())
                                     <span class="label label-danger">due</span>
+                                @elseif ($e->reminders_sent)
+                                    <span class="label label-info">reminded {{ $e->reminders_sent }}/{{ $e->reminder_count }}</span>
                                 @else
                                     <span class="triage-meta">waiting</span>
                                 @endif

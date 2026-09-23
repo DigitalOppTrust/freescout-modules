@@ -137,10 +137,14 @@
         <h3 class="subheader">Escalation</h3>
         <div class="descr-block">
             <p>
-                If this agent has not replied to the customer within the window, the
-                escalation target is notified. If it is still unanswered
-                {{ \Modules\DOTTriage\Services\Settings::get('reassign_after_minutes') }} minutes later, the ticket
-                transfers to them.
+                If this agent has not replied to the customer within the window, they are
+                reminded {{ \Modules\DOTTriage\Services\Settings::get('reminder_count') }} time(s),
+                {{ \Modules\DOTTriage\Services\BusinessTime::describe(\Modules\DOTTriage\Services\Settings::get('reminder_interval_minutes')) }}
+                apart. One interval after the last reminder the escalation target is notified,
+                and if it is still unanswered
+                {{ \Modules\DOTTriage\Services\BusinessTime::describe(\Modules\DOTTriage\Services\Settings::get('reassign_after_minutes')) }}
+                later, the ticket transfers to them. With no escalation target the agent is
+                still reminded, but the ticket never escalates.
             </p>
             <p>
                 <strong>Weekends are not counted.</strong> A ticket arriving Friday
@@ -168,7 +172,7 @@
         </div>
 
         <div class="form-group">
-            <label class="col-sm-3 control-label">Escalate after</label>
+            <label class="col-sm-3 control-label">Reply window</label>
             <div class="col-sm-4">
                 <select name="escalate_after_minutes" class="form-control">
                     <option value="">

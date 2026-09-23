@@ -26,18 +26,33 @@ and finally by an hourly `triage:run --failed` sweep for anything still
 unassigned. A ticket is never left orphaned by one bad API minute.
 
 **Escalation** — a clock starts when a ticket is assigned and whenever the
-customer writes back; it stops when the assignee replies. Past the agent's
-window (working time, weekends excluded) the escalation target is emailed and a
-note is left; after a further grace period the ticket transfers to them and
-their own clock starts, one hop deeper. Depth and chain bound the hops.
-`triage:escalate --apply` runs every 30 minutes; without `--apply` it is a dry
-run listing what is due.
+customer writes back; it stops when the assignee replies. When the agent's
+reply window runs out (working time, weekends excluded) the **assignee** is
+reminded by email, with a note on the ticket, a set number of times an interval
+apart. One interval after the last reminder the escalation target is emailed
+and a note is left; after a further grace period the ticket transfers to them
+and their own clock starts, one hop deeper, reminders and all. Depth and chain
+bound the hops. `triage:escalate --apply` runs every 30 minutes; without
+`--apply` it is a dry run listing what is due.
+
+With the defaults (1 working day window, 3 reminders 3 working days apart) a
+ticket escalates **10 working days** after the reply became owed: reminders at
+days 1, 4 and 7, escalation at day 10.
+
+An agent whose profile names no escalation target (or only someone already in
+the chain) still gets a clock, so they are still reminded; the ticket simply
+never escalates. Those clocks have `escalate_to_user_id` null and are left out
+of the escalation SLA figures in Reports, because they can never breach.
+Reminders are emailed regardless of *Email the escalation target*: that switch
+is about the target, and a reminder is nothing but its email.
 
 Configured at **Manage → Triage → Escalation**:
 
 | Setting | Default | What it does |
 |---|---|---|
-| Escalate after | 1 working day | Window before an unanswered ticket escalates |
+| Reply window | 1 working day | Time without a reply before the first reminder (or escalation, with reminders off) |
+| Reminders before escalating | 3 | Emails to the assignee before the target is involved; 0 escalates at the window |
+| Time between reminders | 3 working days | Between reminders, and between the last reminder and escalation |
 | Transfer ownership after | 2 hours | Grace period between notifying the target and the ticket becoming theirs |
 | Email the escalation target | on | Off leaves only the note on the ticket, which is easy to miss |
 | Maximum escalation hops | 3 | Bound on runaway escalation |
@@ -47,8 +62,9 @@ Configured at **Manage → Triage → Escalation**:
 count working time only, so a ticket arriving on Friday afternoon does not
 escalate over the weekend.
 
-**Changing the window does not retime clocks that are already running.** Each
-escalation records its own window when it starts, so a ticket mid-clock keeps
+**Changing the window or the reminders does not retime clocks that are already
+running.** Each escalation records its own window, reminder count and interval
+when it starts, so a ticket mid-clock keeps
 the rule it began under; new clocks pick up the new value. Moving a deadline a
 ticket is already being measured against would make the audit trail dishonest.
 

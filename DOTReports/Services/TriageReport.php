@@ -337,7 +337,10 @@ class TriageReport
             return null;
         }
 
+        // Reminder-only clocks (no escalation target) can never breach, so
+        // counting them would flatter the SLA figure.
         $q = DB::table('triage_escalations')
+            ->whereNotNull('escalate_to_user_id')
             ->whereBetween('created_at', [$this->range->startSql(), $this->range->endSql()]);
 
         $total      = (clone $q)->count();

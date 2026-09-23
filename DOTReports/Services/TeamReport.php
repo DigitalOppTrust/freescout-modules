@@ -364,7 +364,9 @@ class TeamReport
             return null;
         }
 
+        // Reminder-only clocks (no escalation target) cannot escalate.
         $rows = DB::table('triage_escalations')
+            ->whereNotNull('escalate_to_user_id')
             ->whereBetween('created_at', [$this->range->startSql(), $this->range->endSql()])
             ->selectRaw('assigned_user_id as uid, COUNT(*) as total,
                          SUM(CASE WHEN notified_at IS NOT NULL THEN 1 ELSE 0 END) as notified,

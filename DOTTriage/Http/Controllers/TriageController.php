@@ -68,6 +68,7 @@ class TriageController extends Controller
             'escalations' => \Modules\DOTTriage\Entities\TriageEscalation::where('active', true)
                 ->orderBy('clock_started_at')->get(),
             'escalationStats' => [
+                'reminded'   => \Modules\DOTTriage\Entities\TriageEscalation::where('last_reminded_at', '>=', now()->subDays(30))->count(),
                 'notified'   => \Modules\DOTTriage\Entities\TriageEscalation::where('notified_at', '>=', now()->subDays(30))->count(),
                 'reassigned' => \Modules\DOTTriage\Entities\TriageEscalation::where('reassigned_at', '>=', now()->subDays(30))->count(),
             ],
@@ -160,7 +161,7 @@ class TriageController extends Controller
         }
 
         return redirect()->route('triage.settings')
-            ->with('success', 'Escalation settings saved. Clocks already running keep the window they started with.');
+            ->with('success', 'Escalation settings saved. Clocks already running keep the window and reminders they started with.');
     }
 
     /** Save the automatic-closing settings. */
