@@ -53,6 +53,21 @@ return [
     'activate_invited' => env('DOTSSO_ACTIVATE_INVITED', true),
 
     /*
+     * How long a Google sign-in keeps someone signed in, in days. It sets a
+     * remember-me cookie of this length, so a closed browser or an expired
+     * session does not send them back to the login page. After it runs out
+     * they sign in with Google again. The date is set at sign-in and is not
+     * extended by using the help desk.
+     *
+     * The cookie does not revisit Google, so suspending someone in Workspace
+     * does not sign them out here. Disable the user in FreeScout as well: core's
+     * LogoutIfDeleted middleware then ends a remembered login on the next request.
+     *
+     * 0 turns remember-me off, so a sign-in lasts only as long as the session.
+     */
+    'remember_days' => env('DOTSSO_REMEMBER_DAYS', 90),
+
+    /*
      * Seconds of clock skew tolerated when validating ID token iat/exp.
      */
     'leeway' => env('DOTSSO_LEEWAY', 60),

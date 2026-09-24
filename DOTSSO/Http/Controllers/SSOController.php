@@ -108,14 +108,49 @@ class SSOController extends Controller
         // the authenticated session.
         $request->session()->regenerate();
 
-        // Never "remember" an SSO session. A remembered cookie is a login
-        // that never revisits Google, so it would outlive a Workspace
-        // suspension - which is most of the reason for doing this at all.
-        \Auth::login($user, false);
+        // Remember the sign-in so staff are not sent back to Google every time
+        // a session expires. The cookie does not revisit Google, so it outlasts
+        // a Workspace suspension. Off-boarding therefore means disabling the
+        // FreeScout user too, which core's LogoutIfDeleted enforces on every
+        // request, remembered or not.
+        $days = (int) config('dotsso.remember_days', 90);
+
+        \Auth::login($user, $days > 0);
+
+        if ($days > 0) {
+            $this->limitRememberCookie($days);
+        }
 
         Audit::success($email, $user->id, $activated ? 'invite activated' : '');
 
         return redirect()->intended('/');
+    }
+
+    /**
+     * Laravel 5.5 always queues the remember cookie with forever(), which is
+     * five years. Queue it again under the same name with our lifetime. The
+     * queue is keyed by name, so this replaces the first one. A login restored
+     * from the cookie does not queue it again, so the expiry stays fixed from
+     * this Google sign-in.
+     */
+    protected function limitRememberCookie($days)
+    {
+        $name = \Auth::guard()->getRecallerName();
+        $cookie = \Cookie::queued($name);
+
+        if (!$cookie) {
+            return;
+        }
+
+        \Cookie::queue(\Cookie::make(
+            $name,
+            $cookie->getValue(),
+            $days * 24 * 60,
+            $cookie->getPath(),
+            $cookie->getDomain(),
+            $cookie->isSecure(),
+            $cookie->isHttpOnly()
+        ));
     }
 
     /** Back to the login page with a message, never authenticated. */

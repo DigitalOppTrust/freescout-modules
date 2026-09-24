@@ -34,10 +34,18 @@
     </li>
 </ul>
 
+<h3>How long you stay signed in</h3>
+
 <p>
-    It also means that when someone leaves DOT, disabling their Google account closes their
-    help desk access at the same moment — rather than depending on someone remembering to do
-    it here as well.
+    After you sign in with Google, the help desk remembers you for <strong>90 days</strong>
+    on that browser, even if you close it. When the 90 days are up you are asked to sign in
+    with Google again. Signing out ends it straight away.
+</p>
+
+<p class="dothelp-note">
+    Because the help desk remembers you, disabling someone's Google account does not sign
+    them out here. When someone leaves DOT, an administrator must also disable their help
+    desk user. That signs them out at once.
 </p>
 
 <h3>Who can sign in</h3>
@@ -89,6 +97,7 @@
 
 <p>
     Signing out of the help desk does not sign you out of Google. On a shared or public
-    computer, sign out of the Google account as well — otherwise the next person can click
+    computer, always sign out of the help desk, because otherwise it stays signed in for
+    90 days. Sign out of the Google account as well — otherwise the next person can click
     straight back in.
 </p>

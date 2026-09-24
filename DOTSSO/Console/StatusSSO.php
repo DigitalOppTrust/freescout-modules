@@ -29,7 +29,9 @@ class StatusSSO extends Command
             ['Client ID',         Settings::masked('client_id') ?: '(unset)'],
             ['Client secret',     Settings::get('client_secret') ? 'set' : '(unset)'],
             ['Redirect URI',      \Modules\DOTSSO\Services\OAuthFlow::redirectUri()],
-            ['Break-glass',       implode(', ', Settings::breakglass()) ?: '(none)'],
+            ['Stay signed in',    (int) config('dotsso.remember_days', 90) > 0
+                ? (int) config('dotsso.remember_days', 90).' days' : 'session only'],
+            ['Break-glass',      implode(', ', Settings::breakglass()) ?: '(none)'],
         ];
 
         $this->table(['Setting', 'Value'], $rows);

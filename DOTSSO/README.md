@@ -93,8 +93,16 @@ security is back to being a password, so keep the list to one.
 - **Algorithm is pinned to RS256** from our side, so `alg: none` and
   RS256→HS256 confusion are rejected before any signature check.
 - **Session is regenerated** on login (session fixation).
-- **Remember-me is never set** for an SSO session: a remembered cookie is a
-  login that never revisits Google, so it would outlive a Workspace suspension.
+- **A Google sign-in is remembered for 90 days** (`DOTSSO_REMEMBER_DAYS`, `0`
+  for session only). Staff are not sent back to Google when a session expires
+  or the browser closes. The cookie lifetime is counted from the Google sign-in
+  and using the help desk does not extend it. Laravel 5.5 always writes this
+  cookie with a five-year lifetime, so the controller queues it again with ours.
+- **Trap: a remembered login outlasts a Workspace suspension.** The cookie does
+  not go back to Google, so suspending someone in Workspace does not sign them
+  out here. **When someone leaves, disable their FreeScout user as well.**
+  Core's `LogoutIfDeleted` middleware checks every request, remembered ones
+  included, and ends the session at once.
 - **Robot accounts** (`type = TYPE_ROBOT`) can never hold an interactive session.
 - Google's signing keys are cached for 6 hours; an unknown key id triggers one
   refresh, which is the key-rotation case.
