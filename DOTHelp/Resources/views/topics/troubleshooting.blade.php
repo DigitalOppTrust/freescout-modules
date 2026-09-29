@@ -32,7 +32,9 @@
     Almost always because the reply went out from somewhere other than the ticket — your own
     mailbox, or a CC on another thread. The desk only knows about messages sent from inside the
     conversation, so an off-system answer leaves the ticket looking untouched, keeps it out of
-    the closing rules, and makes the reports understate the team.
+    the closing rules, and makes the reports understate the team. (If support was in CC,
+    triage does recognise a reply from a staff address and stops the escalation clock, but
+    the ticket still shows your message as if it came from the customer.)
 </p>
 <p>
     Paste what you sent in as a note so the record is complete, then continue inside the ticket.

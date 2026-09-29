@@ -217,6 +217,16 @@ class TriageServiceProvider extends ServiceProvider
             return;
         }
 
+        // A staff member answering from their own mail client arrives as a
+        // customer message. It is the agent's side of the exchange: it stops
+        // the escalation clock rather than arming it, and a reopen it caused
+        // is not a customer coming back, so there is nothing to judge.
+        if (\Modules\DOTTriage\Services\Replies::isStaffEmail($thread, $conversation)) {
+            \Cache::forget('triage.reopening.'.$conversation->id);
+            \Modules\DOTTriage\Services\Escalator::stop($conversation->id);
+            return;
+        }
+
         // An auto-reply arriving on an existing ticket must not reopen it or
         // pull an assignee back in - a mail server saying "I'm on leave"
         // should never reactivate a closed conversation. Note it and stop.

@@ -88,6 +88,17 @@ a reading task, so the model decides it. Those get a much shorter quiet window
 went silent, because a conversation the customer has closed off has nothing
 left to wait for.
 
+**Staff replying from their own mail client.** FreeScout types a thread by how
+it arrived, not who wrote it: anything fetched by email is a customer message.
+So when an agent answers from Gmail with support in CC, the ticket shows no
+agent reply at all — it never auto-closes, and the escalation clock transfers
+it away from someone who already dealt with it. `Services/Replies.php` is the
+single place that answers "who spoke last?": an emailed message from an active
+user's address counts as an agent reply, unless that user is the ticket's own
+requester (staff raise tickets too). Every closing, escalation and reopen check
+goes through it; do not query `TYPE_MESSAGE` / `TYPE_CUSTOMER` directly for
+this. It also filters on `state`, because an unsent draft is a `TYPE_MESSAGE`.
+
 Quiet is measured from the last message in **either** direction. Measuring from
 the agent's older reply would let a brand-new customer question through as soon
 as the original window elapsed.
@@ -100,7 +111,7 @@ accuracy is measured rather than assumed.
 
 | Hook | Purpose |
 |---|---|
-| `thread.created` | Customer email arrives — queue triage; on an assigned ticket, (re)start the escalation clock; on a just-reopened ticket, queue the reopen judgement |
+| `thread.created` | Customer email arrives — queue triage; a staff member's emailed reply stops the clock instead; on an assigned ticket, (re)start the escalation clock; on a just-reopened ticket, queue the reopen judgement |
 | `conversation.status_changing` | A customer reply is about to reopen a closed ticket — mark it for judgement |
 | `conversation.user_changed` | Detect human corrections to routing; start the new assignee's clock |
 | `conversation.user_replied` | Stop the escalation clock |

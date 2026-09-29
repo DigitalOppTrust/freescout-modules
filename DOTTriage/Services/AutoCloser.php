@@ -132,10 +132,8 @@ class AutoCloser
                 continue;
             }
 
-            $lastAgent = $c->threads()
-                ->where('type', \App\Thread::TYPE_MESSAGE)
-                ->orderBy('created_at', 'desc')
-                ->first();
+            // Counts staff who answered from their own mail client - see Replies.
+            list($lastAgent, $lastCustomer) = Replies::latest($c);
 
             // No agent has replied - this is not "waiting on the customer",
             // it is unanswered. Closing it would hide a failure rather than
@@ -143,11 +141,6 @@ class AutoCloser
             if (!$lastAgent) {
                 continue;
             }
-
-            $lastCustomer = $c->threads()
-                ->where('type', \App\Thread::TYPE_CUSTOMER)
-                ->orderBy('created_at', 'desc')
-                ->first();
 
             // The customer replied after the agent did - the ball is back with
             // the agent, so it must not be closed.
@@ -234,19 +227,11 @@ class AutoCloser
                 continue;
             }
 
-            $lastAgent = $c->threads()
-                ->where('type', \App\Thread::TYPE_MESSAGE)
-                ->orderBy('created_at', 'desc')
-                ->first();
+            list($lastAgent, $lastCustomer) = Replies::latest($c);
 
             if (!$lastAgent) {
                 continue;
             }
-
-            $lastCustomer = $c->threads()
-                ->where('type', \App\Thread::TYPE_CUSTOMER)
-                ->orderBy('created_at', 'desc')
-                ->first();
 
             // Unlike the inactivity pass, a customer having the last word does
             // not disqualify the conversation here. "Thanks, that works" is the
@@ -331,11 +316,15 @@ class AutoCloser
     protected function judge(ClaudeClient $client, $conversation, $customerLast = false)
     {
         $lines = [];
+        $staff = Replies::staffEmails();
         foreach ($conversation->threads()->orderBy('created_at', 'asc')->limit(20)->get() as $t) {
             if (!in_array((int) $t->type, [1, 2], true)) {
                 continue;   // skip notes and line items
             }
-            $who  = (int) $t->type === 1 ? 'CUSTOMER' : 'AGENT';
+            if ((int) $t->state !== (int) \App\Thread::STATE_PUBLISHED) {
+                continue;   // an unsent draft was never said to the customer
+            }
+            $who  = Replies::isAgent($t, $conversation, $staff) ? 'AGENT' : 'CUSTOMER';
             $body = trim(preg_replace('/\s+/u', ' ',
                 html_entity_decode(strip_tags((string) $t->body), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
             $lines[] = $who.': '.mb_substr($body, 0, 800);

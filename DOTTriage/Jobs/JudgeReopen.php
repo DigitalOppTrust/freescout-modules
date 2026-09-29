@@ -7,6 +7,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Modules\DOTTriage\Services\Replies;
 use Modules\DOTTriage\Services\Settings;
 use Modules\DOTTriage\Services\Escalator;
 use Modules\DOTTriage\Services\ClaudeClient;
@@ -66,7 +67,8 @@ class JudgeReopen implements ShouldQueue
         $touched = $conversation->threads()
             ->whereIn('type', [\App\Thread::TYPE_MESSAGE, \App\Thread::TYPE_LINEITEM])
             ->where('created_at', '>', $thread->created_at)
-            ->exists();
+            ->exists()
+            || Replies::agentRepliedSince($conversation, $thread->created_at);
 
         if ($touched) {
             return;
@@ -209,8 +211,9 @@ class JudgeReopen implements ShouldQueue
             ->get()
             ->reverse();
 
+        $staff = Replies::staffEmails();
         foreach ($history as $t) {
-            $who = (int) $t->type === \App\Thread::TYPE_CUSTOMER ? 'CUSTOMER' : 'AGENT';
+            $who = Replies::isAgent($t, $conversation, $staff) ? 'AGENT' : 'CUSTOMER';
             $lines[] = $who.': '.$this->text($t->body, 600);
         }
 

@@ -158,11 +158,10 @@ class Escalator
 
             // Belt and braces for a missed user_replied hook: an agent reply
             // since the clock started means the customer has been answered.
-            $replied = $c->threads()
-                ->where('type', \App\Thread::TYPE_MESSAGE)
-                ->where('state', \App\Thread::STATE_PUBLISHED)
-                ->where('created_at', '>=', $esc->clock_started_at)
-                ->exists();
+            // Replies sent from an agent's own mail client count too - they
+            // never fire user_replied, so this check is the only one that
+            // sees them.
+            $replied = Replies::agentRepliedSince($c, $esc->clock_started_at);
 
             if ($replied) {
                 if (!$dryRun) {
@@ -427,11 +426,7 @@ class Escalator
             ->get();
 
         foreach ($conversations as $c) {
-            $lastCustomer = $c->threads()->where('type', \App\Thread::TYPE_CUSTOMER)
-                ->orderBy('created_at', 'desc')->first();
-            $lastAgent = $c->threads()->where('type', \App\Thread::TYPE_MESSAGE)
-                ->where('state', \App\Thread::STATE_PUBLISHED)
-                ->orderBy('created_at', 'desc')->first();
+            list($lastAgent, $lastCustomer) = Replies::latest($c);
 
             if (!$lastCustomer || ($lastAgent && $lastAgent->created_at >= $lastCustomer->created_at)) {
                 continue;   // answered, or nothing to answer

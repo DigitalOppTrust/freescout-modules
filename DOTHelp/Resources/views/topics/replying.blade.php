@@ -57,9 +57,12 @@
         <tr>
             <td><strong>The automation</strong></td>
             <td>
-                Closing rules and escalation timers key off recorded replies. A ticket you
-                answered by email is treated as never answered — so it is <em>excluded</em> from
-                the rule that closes handled tickets, and sits open indefinitely.
+                Closing rules and escalation timers key off recorded replies. If
+                <code>support@dotrust.org</code> was not copied in, a ticket you answered by
+                email is treated as never answered: it escalates away from you and is
+                <em>excluded</em> from the rule that closes handled tickets. With support in CC
+                triage recognises your address and counts it, but the desk still files your
+                reply as if the customer wrote it.
             </td>
         </tr>
         <tr>
